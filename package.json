@@ -1,0 +1,53 @@
+{
+  "name": "hitachi2",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "dotenv": "^17.2.2",
+      "zod": "^4.1.13",
+      "typescript": "^5",
+      "@types/bun": "^1.3.10",
+      "@orpc/server": "^1.13.7",
+      "@orpc/openapi": "^1.13.7",
+      "@orpc/zod": "^1.13.7",
+      "better-auth": "^1.5.5",
+      "@prisma/client": "^7.5.0",
+      "@orpc/client": "^1.13.7"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:native": "turbo -F native dev",
+    "dev:web": "turbo -F web dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F @hitachi2/db db:push",
+    "db:studio": "turbo -F @hitachi2/db db:studio",
+    "db:generate": "turbo -F @hitachi2/db db:generate",
+    "db:migrate": "turbo -F @hitachi2/db db:migrate",
+    "db:start": "turbo -F @hitachi2/db db:start",
+    "db:watch": "turbo -F @hitachi2/db db:watch",
+    "db:stop": "turbo -F @hitachi2/db db:stop",
+    "db:down": "turbo -F @hitachi2/db db:down",
+    "check": "biome check --write ."
+  },
+  "dependencies": {
+    "@hitachi2/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.9",
+    "@hitachi2/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "turbo": "^2.8.21",
+    "typescript": "catalog:"
+  },
+  "packageManager": "bun@1.3.11"
+}
