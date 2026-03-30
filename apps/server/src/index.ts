@@ -9,6 +9,8 @@ import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fastify";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import Fastify from "fastify";
+import { boss } from "./jobs/boss";
+import { registerWorkers } from "./jobs/index";
 
 const baseCorsConfig = {
   origin: env.CORS_ORIGIN,
@@ -53,7 +55,7 @@ fastify.register(async (rpcApp) => {
 
   rpcApp.all("/rpc/*", async (request, reply) => {
     const { matched } = await rpcHandler.handle(request, reply, {
-      context: await createContext(request.headers),
+      context: await createContext(request.headers, boss),
       prefix: "/rpc",
     });
 
@@ -64,7 +66,7 @@ fastify.register(async (rpcApp) => {
 
   rpcApp.all("/api-reference/*", async (request, reply) => {
     const { matched } = await apiHandler.handle(request, reply, {
-      context: await createContext(request.headers),
+      context: await createContext(request.headers, boss),
       prefix: "/api-reference",
     });
 
@@ -107,13 +109,19 @@ fastify.get("/", async () => {
   return "OK";
 });
 
+fastify.addHook("onClose", async () => {
+  await boss.stop();
+});
+
 fastify.listen(
   { port: 3000, host: process.env.HOSTNAME ?? "127.0.0.1" },
-  (err) => {
+  async (err) => {
     if (err) {
       fastify.log.error(err);
       process.exit(1);
     }
     console.log("Server running on port 3000");
+    await boss.start();
+    await registerWorkers(boss);
   },
 );
