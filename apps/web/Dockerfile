@@ -7,7 +7,7 @@ COPY . .
 
 RUN turbo prune web --docker
 
-FROM oven/bun:1 AS installer
+FROM oven/bun:1-slim AS installer
 WORKDIR /app
 
 COPY --from=pruner /app/out/json/ .
@@ -19,7 +19,7 @@ COPY --from=pruner /app/out/full/ .
 ENV DATABASE_URL="postgresql://postgres:password@db:5432/hitachi2"
 RUN cd packages/db && bunx prisma generate --schema=prisma/schema
 
-FROM oven/bun:1 AS builder
+FROM oven/bun:1-slim AS builder
 WORKDIR /app
 
 COPY --from=installer /app/ .

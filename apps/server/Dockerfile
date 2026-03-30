@@ -1,4 +1,4 @@
-FROM oven/bun:1 AS pruner
+FROM oven/bun:1-slim AS pruner
 WORKDIR /app
 
 RUN bun add -g turbo
@@ -7,7 +7,7 @@ COPY . .
 
 RUN turbo prune server --docker
 
-FROM oven/bun:1 AS installer
+FROM oven/bun:1-slim AS installer
 WORKDIR /app
 
 COPY --from=pruner /app/out/json/ .
@@ -29,11 +29,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-COPY --from=installer /app/apps/server/dist ./dist
-COPY --from=installer /app/packages/db/prisma ./packages/db/prisma
-COPY --from=installer /app/packages/db/prisma.config.ts ./packages/db/prisma.config.ts
-COPY --from=installer /app/package.json ./package.json
-COPY --from=installer /app/node_modules ./node_modules
+COPY --from=installer /app/apps/server/server /app/server
+COPY --from=installer /app/packages/db/prisma/schema /app/packages/db/prisma/schema
+COPY --from=installer /app/packages/db/prisma /app/packages/db/prisma
+COPY --from=installer /app/packages/db/prisma.config.ts /app/packages/db/prisma.config.ts
+COPY --from=installer /app/package.json /app/package.json
 
 EXPOSE 3000
 
