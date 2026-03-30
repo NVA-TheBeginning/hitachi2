@@ -7,22 +7,23 @@
       "packages/*"
     ],
     "catalog": {
-      "dotenv": "^17.2.2",
-      "zod": "^4.1.13",
-      "typescript": "^5",
-      "@types/bun": "^1.3.10",
-      "@orpc/server": "^1.13.7",
-      "@orpc/openapi": "^1.13.7",
-      "@orpc/zod": "^1.13.7",
-      "better-auth": "^1.5.5",
-      "@prisma/client": "^7.5.0",
-      "@orpc/client": "^1.13.7"
+      "dotenv": "^17.3.1",
+      "zod": "^4.3.6",
+      "typescript": "^5.9.3",
+      "@types/bun": "^1.3.11",
+      "@orpc/server": "^1.13.13",
+      "@orpc/openapi": "^1.13.13",
+      "@orpc/zod": "^1.13.13",
+      "better-auth": "^1.5.6",
+      "@prisma/client": "^7.6.0",
+      "@orpc/client": "^1.13.13"
     }
   },
   "type": "module",
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "build:ci": "turbo run build --affected",
     "check-types": "turbo check-types",
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",
