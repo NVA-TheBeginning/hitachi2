@@ -35,7 +35,7 @@
     "db:watch": "turbo -F @hitachi2/db db:watch",
     "db:stop": "turbo -F @hitachi2/db db:stop",
     "db:down": "turbo -F @hitachi2/db db:down",
-    "check": "biome check --write ."
+    "check": "biome check --write --unsafe ."
   },
   "dependencies": {
     "@hitachi2/env": "workspace:*",
