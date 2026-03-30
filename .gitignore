@@ -48,3 +48,5 @@ coverage
 .cache
 tmp
 temp
+apps/server/server
+apps/server/index.js.map

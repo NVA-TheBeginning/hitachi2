@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "../index.css";
 import Header from "@/components/header";
+import { PWARegister } from "@/components/pwa-register";
 import Providers from "@/components/providers";
 
 const geistSans = Geist({
@@ -16,9 +17,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#000000",
+};
+
 export const metadata: Metadata = {
   title: "hitachi2",
   description: "hitachi2",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "hitachi2",
+  },
 };
 
 export default function RootLayout({
@@ -32,6 +43,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
+          <PWARegister />
           <div className="grid grid-rows-[auto_1fr] h-svh">
             <Header />
             {children}
