@@ -10,3 +10,4 @@
   - [ADR-006 - Utilisation de PostgreSQL comme base de données](ADR/ADR-006.md)
   - [ADR-007 - Utilisation de Prisma comme ORM](ADR/ADR-007.md)
   - [ADR-008 - Utilisation de pg-boss pour la gestion de la queue](ADR/ADR-008.md)
+- [C4](C4/README.md)
