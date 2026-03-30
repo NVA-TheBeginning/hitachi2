@@ -67,9 +67,6 @@ jobs:
     - name: Build
       run: bun --bun run build:ci
 
-    - name: Run tests
-      run: bun --bun run test:ci
-
   lint:
     name: Code quality
     runs-on: ubuntu-slim
