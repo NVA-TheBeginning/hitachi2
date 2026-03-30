@@ -9,7 +9,9 @@
       "default": "./src/*.ts"
     }
   },
-  "scripts": {},
+  "scripts": {
+    "test": "bun test"
+  },
   "dependencies": {
     "@hitachi2/auth": "workspace:*",
     "@hitachi2/db": "workspace:*",
