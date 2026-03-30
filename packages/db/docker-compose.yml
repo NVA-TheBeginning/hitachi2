@@ -3,7 +3,6 @@ name: hitachi2
 services:
   postgres:
     image: postgres
-    container_name: hitachi2-postgres
     environment:
       POSTGRES_DB: hitachi2
       POSTGRES_USER: postgres

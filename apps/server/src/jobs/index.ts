@@ -1,6 +1,7 @@
 import type { PgBoss } from "pg-boss";
 
 export async function registerWorkers(boss: PgBoss) {
+  await boss.createQueue("send-email");
   await boss.work<{ to: string; subject: string }>(
     "send-email",
     async (jobs) => {

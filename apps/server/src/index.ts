@@ -113,15 +113,17 @@ fastify.addHook("onClose", async () => {
   await boss.stop();
 });
 
-fastify.listen(
-  { port: 3000, host: process.env.HOSTNAME ?? "127.0.0.1" },
-  async (err) => {
-    if (err) {
-      fastify.log.error(err);
-      process.exit(1);
-    }
+(async () => {
+  try {
+    await fastify.listen({
+      port: 3000,
+      host: process.env.HOSTNAME ?? "127.0.0.1",
+    });
     console.log("Server running on port 3000");
     await boss.start();
     await registerWorkers(boss);
-  },
-);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+})();
