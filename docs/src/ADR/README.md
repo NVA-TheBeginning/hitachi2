@@ -1,10 +1,8 @@
-# 📐 Architecture Decision Records (ADR)
+# Architecture Decision Records (ADR)
 
-Ce dossier contient les **Architecture Decision Records (ADR)** du projet *Parking Reservation System*.
+Cette section contient les **Architecture Decision Records (ADR)** du projet *Parking Reservation System*.
 
 Les ADR documentent les décisions techniques et architecturales importantes prises durant le projet, ainsi que leur contexte, les alternatives étudiées et leurs conséquences.
-
----
 
 ## Liste des ADR
 
@@ -18,4 +16,3 @@ Les ADR documentent les décisions techniques et architecturales importantes pri
 | ADR-006  | Utilisation de PostgreSQL comme base de données                      |
 | ADR-007  | Utilisation de Prisma comme ORM                                      |
 | ADR-008  | Utilisation de pg-boss pour la gestion de la queue                   |
-
