@@ -1,0 +1,29 @@
+{
+  "name": "@hitachi2/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@hitachi2/auth": "workspace:*",
+    "@hitachi2/db": "workspace:*",
+    "@hitachi2/env": "workspace:*",
+    "@orpc/client": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hitachi2/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
