@@ -7,7 +7,10 @@ export interface JobQueue {
   send<T extends object>(name: string, data: T): Promise<string | null>;
 }
 
-export async function createContext(req: IncomingHttpHeaders, jobQueue: JobQueue) {
+export async function createContext(
+  req: IncomingHttpHeaders,
+  jobQueue: JobQueue,
+) {
   const session = await auth.api.getSession({
     headers: fromNodeHeaders(req),
   });
