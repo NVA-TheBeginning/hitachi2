@@ -1,6 +1,6 @@
 # ADR-XXX - Titre
 
-- **Statut** : Accepted
+- **Status** : Accepté
 - **Date** : YYYY-MM-DD
 
 ## Contexte
