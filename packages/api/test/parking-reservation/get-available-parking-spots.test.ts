@@ -6,10 +6,9 @@ import {
   expect,
   test,
 } from "bun:test";
+import { getCurrentReservationDateString } from "@api/helpers";
 import prisma from "@hitachi2/db";
 import { call } from "@orpc/server";
-
-import { getCurrentReservationDateString } from "../../src/modules/parking-reservation/application/reserve-parking-spot";
 import { appRouter } from "../../src/routers/index";
 
 const USER = {

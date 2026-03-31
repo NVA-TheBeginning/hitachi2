@@ -1,8 +1,8 @@
 import {
   getCurrentReservationDateString,
-  type ParkingReservationRepository,
   toReservationDate,
-} from "./reserve-parking-spot";
+} from "@api/helpers";
+import type { ParkingReservationRepository } from "@api/types";
 
 export async function getAvailableParkingSpots(
   repository: ParkingReservationRepository,

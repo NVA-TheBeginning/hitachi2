@@ -1,24 +1,16 @@
 "use client";
 
+import { getCurrentReservationDateString } from "@api/helpers";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { orpc } from "@/utils/orpc";
 
-function formatInputDate(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
 export function ParkingReservationCard() {
-  const today = formatInputDate(new Date());
+  const today = getCurrentReservationDateString();
   const [selectedDate, setSelectedDate] = useState(today);
 
   const reservationMutation = useMutation(

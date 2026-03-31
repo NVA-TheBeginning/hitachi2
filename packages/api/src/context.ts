@@ -1,11 +1,7 @@
 import type { IncomingHttpHeaders } from "node:http";
-
+import type { JobQueue } from "@api/types";
 import { auth } from "@hitachi2/auth";
 import { fromNodeHeaders } from "better-auth/node";
-
-export interface JobQueue {
-  send<T extends object>(name: string, data: T): Promise<string | null>;
-}
 
 export async function createContext(
   req: IncomingHttpHeaders,

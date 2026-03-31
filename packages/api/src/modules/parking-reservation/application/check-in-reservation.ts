@@ -1,9 +1,9 @@
+import type { ParkingReservationRepository } from "@api/types";
 import {
   ReservationAlreadyCheckedInError,
   ReservationForbiddenError,
   ReservationNotFoundError,
 } from "../domain/errors";
-import type { ParkingReservationRepository } from "./reserve-parking-spot";
 
 export async function checkInReservation(
   repository: ParkingReservationRepository,
