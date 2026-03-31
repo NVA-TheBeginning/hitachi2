@@ -95,4 +95,27 @@ export const prismaParkingReservationRepository = {
       },
     });
   },
+  async findReservationById(
+    id,
+  ): Promise<{ id: string; userId: string; status: string } | null> {
+    return prisma.reservation.findUnique({
+      where: { id },
+      select: { id: true, userId: true, status: true },
+    });
+  },
+  async checkInReservation(reservationId) {
+    const checkIn = await prisma.$transaction(async (tx) => {
+      await tx.reservation.update({
+        where: { id: reservationId },
+        data: { status: "COMPLETED" },
+      });
+
+      return tx.checkIn.create({
+        data: { reservationId },
+        select: { checkedAt: true },
+      });
+    });
+
+    return checkIn;
+  },
 } satisfies ParkingReservationRepository;

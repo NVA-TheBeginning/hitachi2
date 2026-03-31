@@ -13,3 +13,26 @@ export class NoParkingSpotAvailableError extends Error {
     this.name = "NoParkingSpotAvailableError";
   }
 }
+
+export class ReservationNotFoundError extends Error {
+  constructor(reservationId: string) {
+    super(`La reservation ${reservationId} est introuvable.`);
+    this.name = "ReservationNotFoundError";
+  }
+}
+
+export class ReservationForbiddenError extends Error {
+  constructor(reservationId: string) {
+    super(
+      `Vous n'etes pas autorise a acceder a la reservation ${reservationId}.`,
+    );
+    this.name = "ReservationForbiddenError";
+  }
+}
+
+export class ReservationAlreadyCheckedInError extends Error {
+  constructor(reservationId: string) {
+    super(`La reservation ${reservationId} n'est plus en statut RESERVED.`);
+    this.name = "ReservationAlreadyCheckedInError";
+  }
+}
