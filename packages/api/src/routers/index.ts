@@ -1,3 +1,4 @@
+import prisma from "@hitachi2/db";
 import type { RouterClient } from "@orpc/server";
 
 import { protectedProcedure, publicProcedure } from "../index";
@@ -5,6 +6,14 @@ import { protectedProcedure, publicProcedure } from "../index";
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
     return "OK";
+  }),
+  dbCheck: publicProcedure.handler(async () => {
+    await prisma.$queryRaw`SELECT 1`;
+
+    return {
+      ok: true,
+      checkedAt: new Date().toISOString(),
+    };
   }),
   privateData: protectedProcedure.handler(({ context }) => {
     return {
