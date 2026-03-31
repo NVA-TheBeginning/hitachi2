@@ -1,13 +1,22 @@
+enum UserRole {
+  MANAGER
+  EMPLOYEE
+  SECRETARY
+}
+
 model User {
-  id            String    @id
+  id            String        @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean       @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  role          UserRole      @default(EMPLOYEE)
   sessions      Session[]
   accounts      Account[]
+  cars          Car[]
+  reservations  Reservation[]
 
   @@unique([email])
   @@map("user")
