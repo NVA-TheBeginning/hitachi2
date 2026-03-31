@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import { authClient } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
 import Loader from "@/components/loader";
 import RoleLogin from "@/components/role-login";
 import SignInForm from "@/components/sign-in-form";
 import SignUpForm from "@/components/sign-up-form";
+import { authClient } from "@/lib/auth-client";
 
 type View = "picker" | "signin" | "signup";
 
