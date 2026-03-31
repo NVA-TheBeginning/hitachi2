@@ -21,6 +21,8 @@ const USER = {
 const CAR = {
   id: "test-list-car-1",
   userId: USER.id,
+  name: "List Car",
+  licensePlate: "LIST-001-AA",
   electric: false,
 };
 

@@ -10,8 +10,27 @@ export type ParkingSpotSummary = {
   charger: boolean;
 };
 
+export type CarSummary = {
+  id: string;
+  name: string;
+  licensePlate: string;
+  electric: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type AccountSummary = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  cars: CarSummary[];
+};
+
 export type ParkingReservationRepository = {
-  findReservationActor(): Promise<{ userId: string; carId: string } | null>;
+  findReservationActor(
+    userId: string,
+  ): Promise<{ userId: string; carId: string } | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
   findFirstAvailableSpot(
     excludedSpotIds: string[],
@@ -28,4 +47,27 @@ export type ParkingReservationRepository = {
     id: string,
   ): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
   checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
+};
+
+export type AccountRepository = {
+  findAccountByUserId(userId: string): Promise<AccountSummary | null>;
+  updateAccountName(userId: string, name: string): Promise<AccountSummary>;
+  findCarByIdForUser(carId: string, userId: string): Promise<CarSummary | null>;
+  findCarByLicensePlate(
+    licensePlate: string,
+  ): Promise<{ id: string; userId: string } | null>;
+  createCar(input: {
+    userId: string;
+    name: string;
+    licensePlate: string;
+    electric: boolean;
+  }): Promise<CarSummary>;
+  updateCar(input: {
+    carId: string;
+    name: string;
+    licensePlate: string;
+    electric: boolean;
+  }): Promise<CarSummary>;
+  countReservationsForCar(carId: string): Promise<number>;
+  deleteCar(carId: string): Promise<void>;
 };

@@ -22,8 +22,20 @@ const USER_2 = {
   email: "test-ci-2@test.com",
   emailVerified: true as const,
 };
-const CAR_1 = { id: "test-ci-car-1", userId: USER_1.id, electric: false };
-const CAR_2 = { id: "test-ci-car-2", userId: USER_2.id, electric: false };
+const CAR_1 = {
+  id: "test-ci-car-1",
+  userId: USER_1.id,
+  name: "CI Car 1",
+  licensePlate: "CI-001-AA",
+  electric: false,
+};
+const CAR_2 = {
+  id: "test-ci-car-2",
+  userId: USER_2.id,
+  name: "CI Car 2",
+  licensePlate: "CI-002-AA",
+  electric: false,
+};
 const SPOT = {
   id: "test-ci-spot-1",
   name: "TEST-CI-A01",

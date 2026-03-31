@@ -3,22 +3,27 @@ import type { ParkingReservationRepository } from "@api/types";
 import {
   NoParkingSpotAvailableError,
   SeedDataMissingError,
+  UserCarMissingError,
 } from "../domain/errors";
 
 export async function reserveParkingSpot(
   repository: ParkingReservationRepository,
-  input: { date: string },
+  input: { date: string; userId: string },
 ) {
   const reservationDate = toReservationDate(input.date);
 
   const [reservationActor, availableSpotCount, reservedSpotIds] =
     await Promise.all([
-      repository.findReservationActor(),
+      repository.findReservationActor(input.userId),
       repository.countAvailableParkingSpots(),
       repository.findReservedSpotIdsForDate(reservationDate),
     ]);
 
-  if (!reservationActor || availableSpotCount === 0) {
+  if (!reservationActor) {
+    throw new UserCarMissingError();
+  }
+
+  if (availableSpotCount === 0) {
     throw new SeedDataMissingError();
   }
 

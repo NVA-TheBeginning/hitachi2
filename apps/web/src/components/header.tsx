@@ -10,8 +10,9 @@ export default function Header() {
   const { data: session } = authClient.useSession();
 
   const links = [
-    { to: "/status", label: "Status" },
     { to: "/dashboard", label: "Dashboard" },
+    { to: "/account", label: "Mon compte" },
+    { to: "/status", label: "Status" },
   ] as const;
 
   return (

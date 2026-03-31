@@ -89,7 +89,14 @@ async function seedCar() {
     return;
   }
 
-  await prisma.car.create({ data: { userId: user.id, electric: false } });
+  await prisma.car.create({
+    data: {
+      userId: user.id,
+      name: "Voiture principale",
+      licensePlate: "AA-001-AA",
+      electric: false,
+    },
+  });
   console.log("Created car for test@user.com.");
 }
 
@@ -97,6 +104,7 @@ async function seedTestUser(
   name: string,
   email: string,
   role: UserRole,
+  licensePlate: string,
   electric = false,
 ) {
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -119,7 +127,14 @@ async function seedTestUser(
       password: hashedPassword,
     },
   });
-  await prisma.car.create({ data: { userId, electric } });
+  await prisma.car.create({
+    data: {
+      userId,
+      name: `${name} - voiture`,
+      licensePlate,
+      electric,
+    },
+  });
   console.log(`Created user: ${email} (${role})`);
 }
 
@@ -127,14 +142,14 @@ await seedUser();
 await seedParkingSpots();
 await seedCar();
 
-await seedTestUser("Ken", "ken@test.com", "EMPLOYEE");
-await seedTestUser("Ron", "ron@test.com", "EMPLOYEE");
-await seedTestUser("Lenn", "lenn@test.com", "EMPLOYEE");
-await seedTestUser("Alice", "alice@test.com", "MANAGER");
-await seedTestUser("Bob", "bob@test.com", "MANAGER");
-await seedTestUser("Carol", "carol@test.com", "MANAGER");
-await seedTestUser("Dave", "dave@test.com", "SECRETARY");
-await seedTestUser("Eve", "eve@test.com", "SECRETARY");
-await seedTestUser("Frank", "frank@test.com", "SECRETARY");
+await seedTestUser("Ken", "ken@test.com", "EMPLOYEE", "AA-101-AA");
+await seedTestUser("Ron", "ron@test.com", "EMPLOYEE", "AA-102-AA");
+await seedTestUser("Lenn", "lenn@test.com", "EMPLOYEE", "AA-103-AA");
+await seedTestUser("Alice", "alice@test.com", "MANAGER", "AA-201-AA");
+await seedTestUser("Bob", "bob@test.com", "MANAGER", "AA-202-AA");
+await seedTestUser("Carol", "carol@test.com", "MANAGER", "AA-203-AA");
+await seedTestUser("Dave", "dave@test.com", "SECRETARY", "AA-301-AA");
+await seedTestUser("Eve", "eve@test.com", "SECRETARY", "AA-302-AA");
+await seedTestUser("Frank", "frank@test.com", "SECRETARY", "AA-303-AA");
 
 await prisma.$disconnect();

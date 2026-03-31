@@ -11,6 +11,7 @@ import {
   ReservationForbiddenError,
   ReservationNotFoundError,
   SeedDataMissingError,
+  UserCarMissingError,
 } from "./domain/errors";
 import { prismaParkingReservationRepository } from "./infrastructure/prisma-parking-reservation-repository";
 
@@ -23,17 +24,20 @@ const optionalReservationDateSchema = z.preprocess(
 );
 
 export const parkingReservationRouter = {
-  reserveParkingSpot: publicProcedure
+  reserveParkingSpot: protectedProcedure
     .input(
       z.object({
         date: reservationDateSchema,
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       try {
         return await reserveParkingSpot(
           prismaParkingReservationRepository,
-          input,
+          {
+            ...input,
+            userId: context.session.user.id,
+          },
         );
       } catch (error) {
         if (error instanceof NoParkingSpotAvailableError) {
@@ -43,6 +47,12 @@ export const parkingReservationRouter = {
         }
 
         if (error instanceof SeedDataMissingError) {
+          throw new ORPCError("PRECONDITION_FAILED", {
+            message: error.message,
+          });
+        }
+
+        if (error instanceof UserCarMissingError) {
           throw new ORPCError("PRECONDITION_FAILED", {
             message: error.message,
           });

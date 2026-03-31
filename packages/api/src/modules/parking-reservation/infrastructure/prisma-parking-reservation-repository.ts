@@ -16,10 +16,13 @@ function getReservationDayRange(date: Date) {
 }
 
 export const prismaParkingReservationRepository = {
-  async findReservationActor() {
+  async findReservationActor(userId) {
     const car = await prisma.car.findFirst({
+      where: {
+        userId,
+      },
       orderBy: {
-        id: "asc",
+        createdAt: "asc",
       },
       select: {
         id: true,
