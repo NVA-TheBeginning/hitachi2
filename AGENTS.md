@@ -5,6 +5,7 @@ This file provides context about the project for AI assistants.
 ## Project Overview
 
 - **Ecosystem**: Typescript
+- **Core Features**: parking reservation, check-in, and parking spot availability lookup by day
 
 ## Tech Stack
 

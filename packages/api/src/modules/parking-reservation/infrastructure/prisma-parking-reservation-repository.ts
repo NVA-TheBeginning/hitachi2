@@ -2,6 +2,12 @@ import prisma from "@hitachi2/db";
 
 import type { ParkingReservationRepository } from "../application/reserve-parking-spot";
 
+const parkingSpotSummarySelect = {
+  id: true,
+  name: true,
+  charger: true,
+} as const;
+
 function getReservationDayRange(date: Date) {
   const start = new Date(date);
   const end = new Date(date);
@@ -60,11 +66,21 @@ export const prismaParkingReservationRepository = {
       orderBy: {
         name: "asc",
       },
-      select: {
-        id: true,
-        name: true,
-        charger: true,
+      select: parkingSpotSummarySelect,
+    });
+  },
+  async findAvailableSpots(excludedSpotIds) {
+    return prisma.parkingSpot.findMany({
+      where: {
+        available: true,
+        ...(excludedSpotIds.length > 0
+          ? { id: { notIn: excludedSpotIds } }
+          : {}),
       },
+      orderBy: {
+        name: "asc",
+      },
+      select: parkingSpotSummarySelect,
     });
   },
   async countAvailableParkingSpots() {
@@ -86,11 +102,7 @@ export const prismaParkingReservationRepository = {
       select: {
         id: true,
         parkingSpot: {
-          select: {
-            id: true,
-            name: true,
-            charger: true,
-          },
+          select: parkingSpotSummarySelect,
         },
       },
     });

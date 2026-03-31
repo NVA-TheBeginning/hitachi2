@@ -3,7 +3,7 @@ import {
   SeedDataMissingError,
 } from "../domain/errors";
 
-type ParkingSpotSummary = {
+export type ParkingSpotSummary = {
   id: string;
   name: string;
   charger: boolean;
@@ -15,6 +15,7 @@ export type ParkingReservationRepository = {
   findFirstAvailableSpot(
     excludedSpotIds: string[],
   ): Promise<ParkingSpotSummary | null>;
+  findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
   countAvailableParkingSpots(): Promise<number>;
   createReservation(input: {
     userId: string;
@@ -30,6 +31,14 @@ export type ParkingReservationRepository = {
 
 export function toReservationDate(date: string) {
   return new Date(`${date}T00:00:00.000Z`);
+}
+
+export function getCurrentReservationDateString(now = new Date()) {
+  const year = now.getFullYear();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 export async function reserveParkingSpot(
