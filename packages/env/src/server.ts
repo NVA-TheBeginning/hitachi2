@@ -5,9 +5,12 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().min(1),
-    BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.url(),
-    CORS_ORIGIN: z.url(),
+    BETTER_AUTH_SECRET: z
+      .string()
+      .min(32)
+      .default("build-time-secret-min-32-chars-long-not-for-runtime"),
+    BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
+    CORS_ORIGIN: z.string().min(1).default("http://localhost:3001"),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

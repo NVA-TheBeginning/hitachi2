@@ -62,7 +62,7 @@ jobs:
       run: bun ci
 
     - name: Setup database
-      run: bun --bun run db:push
+      run: bun --bun run db:push && bun --bun run db:seed
 
     - name: Build
       run: bun --bun run build:ci

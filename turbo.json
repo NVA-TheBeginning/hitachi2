@@ -6,7 +6,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["server", "build/**", ".next/**", "!.next/cache/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -23,7 +23,8 @@
       "persistent": true
     },
     "db:push": {
-      "cache": false
+      "cache": false,
+      "env": ["DATABASE_URL"]
     },
     "db:studio": {
       "cache": false,
@@ -47,6 +48,9 @@
       "persistent": true
     },
     "db:down": {
+      "cache": false
+    },
+    "db:seed": {
       "cache": false
     }
   }
