@@ -1,8 +1,6 @@
 export class SeedDataMissingError extends Error {
   constructor() {
-    super(
-      "Les donnees de reservation sont absentes. Lance bun db:seed manuellement avant de reserver.",
-    );
+    super("Les donnees de reservation sont absentes. Lance bun db:seed manuellement avant de reserver.");
     this.name = "SeedDataMissingError";
   }
 }
@@ -23,9 +21,7 @@ export class ReservationNotFoundError extends Error {
 
 export class ReservationForbiddenError extends Error {
   constructor(reservationId: string) {
-    super(
-      `Vous n'etes pas autorise a acceder a la reservation ${reservationId}.`,
-    );
+    super(`Vous n'etes pas autorise a acceder a la reservation ${reservationId}.`);
     this.name = "ReservationForbiddenError";
   }
 }
@@ -34,5 +30,12 @@ export class ReservationAlreadyCheckedInError extends Error {
   constructor(reservationId: string) {
     super(`La reservation ${reservationId} n'est plus en statut RESERVED.`);
     this.name = "ReservationAlreadyCheckedInError";
+  }
+}
+
+export class ReservationLimitExceededError extends Error {
+  constructor(currentCount: number, maxAllowed: number) {
+    super(`Vous avez deja reserve ${currentCount} jour(s). Maximum autorise: ${maxAllowed} jour(s).`);
+    this.name = "ReservationLimitExceededError";
   }
 }

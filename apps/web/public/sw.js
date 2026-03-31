@@ -1,12 +1,6 @@
 const CACHE_NAME = "hitachi2-pwa-v1";
 const OFFLINE_URL = "/offline.html";
-const PRECACHE_URLS = [
-  "/",
-  "/manifest.webmanifest",
-  "/icons/icon-192x192.png",
-  "/icons/icon-512x512.png",
-  OFFLINE_URL,
-];
+const PRECACHE_URLS = ["/", "/manifest.webmanifest", "/icons/icon-192x192.png", "/icons/icon-512x512.png", OFFLINE_URL];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -21,13 +15,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key)),
-        ),
-      )
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
 });
@@ -57,11 +45,7 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request).catch(async () => {
-        return (
-          (await caches.match(request)) ||
-          (await caches.match(OFFLINE_URL)) ||
-          Response.error()
-        );
+        return (await caches.match(request)) || (await caches.match(OFFLINE_URL)) || Response.error();
       }),
     );
 
@@ -80,9 +64,7 @@ self.addEventListener("fetch", (event) => {
         }
 
         const responseClone = networkResponse.clone();
-        void caches
-          .open(CACHE_NAME)
-          .then((cache) => cache.put(request, responseClone));
+        void caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
 
         return networkResponse;
       });

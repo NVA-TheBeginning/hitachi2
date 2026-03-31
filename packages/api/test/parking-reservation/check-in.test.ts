@@ -1,26 +1,20 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
-import prisma from "@hitachi2/db";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
+import { createContext } from "../helpers";
 
 const USER_1 = {
   id: "test-ci-user-1",
   name: "CI User 1",
   email: "test-ci-1@test.com",
-  emailVerified: true as const,
+  emailVerified: true,
 };
 const USER_2 = {
   id: "test-ci-user-2",
   name: "CI User 2",
   email: "test-ci-2@test.com",
-  emailVerified: true as const,
+  emailVerified: true,
 };
 const CAR_1 = { id: "test-ci-car-1", userId: USER_1.id, electric: false };
 const CAR_2 = { id: "test-ci-car-2", userId: USER_2.id, electric: false };
@@ -31,32 +25,7 @@ const SPOT = {
   available: true,
 };
 
-const authedContext = {
-  context: {
-    session: {
-      session: {
-        id: "test-session-id",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: USER_1.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        token: "test-token",
-        ipAddress: "127.0.0.1",
-        userAgent: "bun-test",
-      },
-      user: {
-        id: USER_1.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        email: USER_1.email,
-        emailVerified: USER_1.emailVerified,
-        name: USER_1.name,
-        image: null,
-      },
-    },
-    jobQueue: { send: async () => null },
-  },
-};
+const authedContext = createContext(USER_1);
 
 beforeAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: SPOT.id } });
@@ -87,18 +56,14 @@ beforeEach(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: SPOT.id } });
 });
 
-async function createReservation(overrides?: {
-  userId?: string;
-  carId?: string;
-  status?: "RESERVED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
-}) {
+async function createReservation(overrides?: { userId?: string; carId?: string; status?: ReservationStatus }) {
   return prisma.reservation.create({
     data: {
       userId: overrides?.userId ?? USER_1.id,
       carId: overrides?.carId ?? CAR_1.id,
       parkingSpotId: SPOT.id,
       date: new Date("2099-07-01T00:00:00.000Z"),
-      status: overrides?.status ?? "RESERVED",
+      status: overrides?.status ?? ReservationStatus.RESERVED,
     },
   });
 }
@@ -107,18 +72,14 @@ describe("parking-reservation.checkIn", () => {
   test("should check in, return checkedAt, and update DB state", async () => {
     const reservation = await createReservation();
 
-    const result = await call(
-      appRouter.checkIn,
-      { reservationId: reservation.id },
-      authedContext,
-    );
+    const result = await call(appRouter.checkIn, { reservationId: reservation.id }, authedContext);
 
     expect(result.checkedAt).toBeInstanceOf(Date);
 
     const updated = await prisma.reservation.findUnique({
       where: { id: reservation.id },
     });
-    expect(updated?.status).toBe("COMPLETED");
+    expect(updated?.status).toBe(ReservationStatus.COMPLETED);
 
     const checkIn = await prisma.checkIn.findUnique({
       where: { reservationId: reservation.id },
@@ -139,13 +100,9 @@ describe("parking-reservation.checkIn", () => {
   });
 
   test("should throw NOT_FOUND when reservation does not exist", async () => {
-    expect(
-      call(
-        appRouter.checkIn,
-        { reservationId: "non-existent-id" },
-        authedContext,
-      ),
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(call(appRouter.checkIn, { reservationId: "non-existent-id" }, authedContext)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
   });
 
   test("should throw FORBIDDEN when user does not own the reservation", async () => {
@@ -154,16 +111,16 @@ describe("parking-reservation.checkIn", () => {
       carId: CAR_2.id,
     });
 
-    expect(
-      call(appRouter.checkIn, { reservationId: reservation.id }, authedContext),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(call(appRouter.checkIn, { reservationId: reservation.id }, authedContext)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 
   test("should throw CONFLICT when reservation is not in RESERVED status", async () => {
-    const reservation = await createReservation({ status: "COMPLETED" });
+    const reservation = await createReservation({ status: ReservationStatus.COMPLETED });
 
-    expect(
-      call(appRouter.checkIn, { reservationId: reservation.id }, authedContext),
-    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(call(appRouter.checkIn, { reservationId: reservation.id }, authedContext)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
   });
 });

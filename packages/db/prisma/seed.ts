@@ -93,12 +93,7 @@ async function seedCar() {
   console.log("Created car for test@user.com.");
 }
 
-async function seedTestUser(
-  name: string,
-  email: string,
-  role: UserRole,
-  electric = false,
-) {
+async function seedTestUser(name: string, email: string, role: UserRole, electric = false) {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     console.log(`User ${email} already exists, skipping.`);
