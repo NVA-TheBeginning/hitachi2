@@ -15,7 +15,7 @@ const USER = {
   id: "test-list-user-1",
   name: "List User",
   email: "test-list-1@test.com",
-  emailVerified: true as const,
+  emailVerified: true,
 };
 
 const CAR = {

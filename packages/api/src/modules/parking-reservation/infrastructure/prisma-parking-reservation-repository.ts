@@ -189,4 +189,19 @@ export const prismaParkingReservationRepository = {
 
     return checkIn;
   },
+  async getUserReservations(userId: string) {
+    const [reservationCount, user] = await Promise.all([
+      prisma.reservation.count({
+        where: { userId, status: "RESERVED" },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      }),
+    ]);
+    return {
+      reservationCount,
+      role: user?.role ?? "EMPLOYEE",
+    };
+  },
 } satisfies ParkingReservationRepository;

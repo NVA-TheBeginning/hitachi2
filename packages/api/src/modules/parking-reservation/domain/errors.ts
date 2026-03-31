@@ -36,3 +36,12 @@ export class ReservationAlreadyCheckedInError extends Error {
     this.name = "ReservationAlreadyCheckedInError";
   }
 }
+
+export class ReservationLimitExceededError extends Error {
+  constructor(currentCount: number, maxAllowed: number) {
+    super(
+      `Vous avez deja reserve ${currentCount} jour(s). Maximum autorise: ${maxAllowed} jour(s).`,
+    );
+    this.name = "ReservationLimitExceededError";
+  }
+}

@@ -1,4 +1,4 @@
-import type { ReservationStatus } from "@hitachi2/db";
+import type { ReservationStatus, UserRole } from "@hitachi2/db";
 
 export interface JobQueue {
   send<T extends object>(name: string, data: T): Promise<string | null>;
@@ -36,4 +36,7 @@ export type ParkingReservationRepository = {
     id: string,
   ): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
   checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
+  getUserReservations(
+    userId: string,
+  ): Promise<{ reservationCount: number; role: UserRole }>;
 };

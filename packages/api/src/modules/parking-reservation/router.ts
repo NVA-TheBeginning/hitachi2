@@ -9,6 +9,7 @@ import {
   NoParkingSpotAvailableError,
   ReservationAlreadyCheckedInError,
   ReservationForbiddenError,
+  ReservationLimitExceededError,
   ReservationNotFoundError,
   SeedDataMissingError,
 } from "./domain/errors";
@@ -23,19 +24,25 @@ const optionalReservationDateSchema = z.preprocess(
 );
 
 export const parkingReservationRouter = {
-  reserveParkingSpot: publicProcedure
+  reserveParkingSpot: protectedProcedure
     .input(
       z.object({
         date: reservationDateSchema,
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       try {
-        return await reserveParkingSpot(
-          prismaParkingReservationRepository,
-          input,
-        );
+        return await reserveParkingSpot(prismaParkingReservationRepository, {
+          date: input.date,
+          userId: context.session.user.id,
+        });
       } catch (error) {
+        if (error instanceof ReservationLimitExceededError) {
+          throw new ORPCError("FORBIDDEN", {
+            message: error.message,
+          });
+        }
+
         if (error instanceof NoParkingSpotAvailableError) {
           throw new ORPCError("CONFLICT", {
             message: error.message,

@@ -9,18 +9,19 @@ import {
 import prisma from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
+import { createContext } from "../helpers";
 
 const USER_1 = {
   id: "test-ci-user-1",
   name: "CI User 1",
   email: "test-ci-1@test.com",
-  emailVerified: true as const,
+  emailVerified: true,
 };
 const USER_2 = {
   id: "test-ci-user-2",
   name: "CI User 2",
   email: "test-ci-2@test.com",
-  emailVerified: true as const,
+  emailVerified: true,
 };
 const CAR_1 = { id: "test-ci-car-1", userId: USER_1.id, electric: false };
 const CAR_2 = { id: "test-ci-car-2", userId: USER_2.id, electric: false };
@@ -31,32 +32,7 @@ const SPOT = {
   available: true,
 };
 
-const authedContext = {
-  context: {
-    session: {
-      session: {
-        id: "test-session-id",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: USER_1.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        token: "test-token",
-        ipAddress: "127.0.0.1",
-        userAgent: "bun-test",
-      },
-      user: {
-        id: USER_1.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        email: USER_1.email,
-        emailVerified: USER_1.emailVerified,
-        name: USER_1.name,
-        image: null,
-      },
-    },
-    jobQueue: { send: async () => null },
-  },
-};
+const authedContext = createContext(USER_1);
 
 beforeAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: SPOT.id } });
