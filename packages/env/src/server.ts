@@ -4,7 +4,10 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().min(1),
+    DATABASE_URL: z
+      .string()
+      .min(1)
+      .default("postgresql://postgres:password@localhost:5432/hitachi2"),
     BETTER_AUTH_SECRET: z
       .string()
       .min(32)

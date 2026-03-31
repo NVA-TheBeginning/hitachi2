@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import path from "node:path";
 import dotenv from "dotenv";
+import type { UserRole } from "../generated";
 
 dotenv.config({
   path: path.resolve(import.meta.dir, "../../../apps/server/.env"),
@@ -92,7 +93,48 @@ async function seedCar() {
   console.log("Created car for test@user.com.");
 }
 
+async function seedTestUser(
+  name: string,
+  email: string,
+  role: UserRole,
+  electric = false,
+) {
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    console.log(`User ${email} already exists, skipping.`);
+    return;
+  }
+  const userId = randomUUID();
+  const accountId = randomUUID();
+  const hashedPassword = hashPassword("Password123!");
+  await prisma.user.create({
+    data: { id: userId, name, email, emailVerified: true, role },
+  });
+  await prisma.account.create({
+    data: {
+      id: accountId,
+      accountId: userId,
+      providerId: "credential",
+      userId,
+      password: hashedPassword,
+    },
+  });
+  await prisma.car.create({ data: { userId, electric } });
+  console.log(`Created user: ${email} (${role})`);
+}
+
 await seedUser();
 await seedParkingSpots();
 await seedCar();
+
+await seedTestUser("Ken", "ken@test.com", "EMPLOYEE");
+await seedTestUser("Ron", "ron@test.com", "EMPLOYEE");
+await seedTestUser("Lenn", "lenn@test.com", "EMPLOYEE");
+await seedTestUser("Alice", "alice@test.com", "MANAGER");
+await seedTestUser("Bob", "bob@test.com", "MANAGER");
+await seedTestUser("Carol", "carol@test.com", "MANAGER");
+await seedTestUser("Dave", "dave@test.com", "SECRETARY");
+await seedTestUser("Eve", "eve@test.com", "SECRETARY");
+await seedTestUser("Frank", "frank@test.com", "SECRETARY");
+
 await prisma.$disconnect();
