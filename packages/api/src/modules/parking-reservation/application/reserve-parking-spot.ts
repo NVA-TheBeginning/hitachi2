@@ -3,51 +3,47 @@ import {
   SeedDataMissingError,
 } from "../domain/errors";
 
-export interface ReserveParkingSpotInput {
-  date: string;
-}
+type ReservationActor = {
+  userId: string;
+  carId: string;
+};
 
-export interface ParkingSpotSummary {
+type ParkingSpotSummary = {
   id: string;
   name: string;
   charger: boolean;
-}
+};
 
-export interface ReservationSummary {
+type ReservationDraft = {
+  userId: string;
+  carId: string;
+  parkingSpotId: string;
+  date: Date;
+};
+
+type CreatedReservation = {
   id: string;
   parkingSpot: ParkingSpotSummary;
-}
+};
 
-export interface ParkingReservationRepository {
-  findReservationActor(): Promise<{ userId: string; carId: string } | null>;
+export type ParkingReservationRepository = {
+  findReservationActor(): Promise<ReservationActor | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
   findFirstAvailableSpot(
     excludedSpotIds: string[],
   ): Promise<ParkingSpotSummary | null>;
   countAvailableParkingSpots(): Promise<number>;
-  createReservation(input: {
-    userId: string;
-    carId: string;
-    parkingSpotId: string;
-    date: Date;
-  }): Promise<ReservationSummary>;
-}
+  createReservation(input: ReservationDraft): Promise<CreatedReservation>;
+};
 
-export interface ReserveParkingSpotResult {
-  reservationId: string;
-  date: string;
-  parkingSpot: ParkingSpotSummary;
-  remainingSpots: number;
-}
-
-export function toReservationDate(date: string): Date {
+export function toReservationDate(date: string) {
   return new Date(`${date}T00:00:00.000Z`);
 }
 
 export async function reserveParkingSpot(
   repository: ParkingReservationRepository,
-  input: ReserveParkingSpotInput,
-): Promise<ReserveParkingSpotResult> {
+  input: { date: string },
+) {
   const reservationDate = toReservationDate(input.date);
   const reservationActor = await repository.findReservationActor();
 

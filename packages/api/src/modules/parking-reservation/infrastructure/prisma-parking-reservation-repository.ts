@@ -1,9 +1,6 @@
 import prisma from "@hitachi2/db";
 
-import type {
-  ParkingReservationRepository,
-  ReservationSummary,
-} from "../application/reserve-parking-spot";
+import type { ParkingReservationRepository } from "../application/reserve-parking-spot";
 
 function getReservationDayRange(date: Date) {
   const start = new Date(date);
@@ -13,90 +10,89 @@ function getReservationDayRange(date: Date) {
   return { start, end };
 }
 
-export const prismaParkingReservationRepository: ParkingReservationRepository =
-  {
-    async findReservationActor() {
-      const car = await prisma.car.findFirst({
-        orderBy: {
-          id: "asc",
-        },
-        select: {
-          id: true,
-          userId: true,
-        },
-      });
+export const prismaParkingReservationRepository = {
+  async findReservationActor() {
+    const car = await prisma.car.findFirst({
+      orderBy: {
+        id: "asc",
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
 
-      if (!car) {
-        return null;
-      }
+    if (!car) {
+      return null;
+    }
 
-      return {
-        userId: car.userId,
-        carId: car.id,
-      };
-    },
-    async findReservedSpotIdsForDate(date) {
-      const { start, end } = getReservationDayRange(date);
+    return {
+      userId: car.userId,
+      carId: car.id,
+    };
+  },
+  async findReservedSpotIdsForDate(date) {
+    const { start, end } = getReservationDayRange(date);
 
-      const reservations = await prisma.reservation.findMany({
-        where: {
-          date: {
-            gte: start,
-            lt: end,
-          },
-          status: "RESERVED",
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        date: {
+          gte: start,
+          lt: end,
         },
-        select: {
-          parkingSpotId: true,
-        },
-      });
+        status: "RESERVED",
+      },
+      select: {
+        parkingSpotId: true,
+      },
+    });
 
-      return reservations.map((reservation) => reservation.parkingSpotId);
-    },
-    async findFirstAvailableSpot(excludedSpotIds) {
-      return prisma.parkingSpot.findFirst({
-        where: {
-          available: true,
-          ...(excludedSpotIds.length > 0
-            ? { id: { notIn: excludedSpotIds } }
-            : {}),
-        },
-        orderBy: {
-          name: "asc",
-        },
-        select: {
-          id: true,
-          name: true,
-          charger: true,
-        },
-      });
-    },
-    async countAvailableParkingSpots() {
-      return prisma.parkingSpot.count({
-        where: {
-          available: true,
-        },
-      });
-    },
-    async createReservation(input): Promise<ReservationSummary> {
-      return prisma.reservation.create({
-        data: {
-          userId: input.userId,
-          carId: input.carId,
-          parkingSpotId: input.parkingSpotId,
-          date: input.date,
-          status: "RESERVED",
-        },
-        select: {
-          id: true,
-          parkingSpot: {
-            select: {
-              id: true,
-              name: true,
-              charger: true,
-            },
+    return reservations.map((reservation) => reservation.parkingSpotId);
+  },
+  async findFirstAvailableSpot(excludedSpotIds) {
+    return prisma.parkingSpot.findFirst({
+      where: {
+        available: true,
+        ...(excludedSpotIds.length > 0
+          ? { id: { notIn: excludedSpotIds } }
+          : {}),
+      },
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+        charger: true,
+      },
+    });
+  },
+  async countAvailableParkingSpots() {
+    return prisma.parkingSpot.count({
+      where: {
+        available: true,
+      },
+    });
+  },
+  async createReservation(input) {
+    return prisma.reservation.create({
+      data: {
+        userId: input.userId,
+        carId: input.carId,
+        parkingSpotId: input.parkingSpotId,
+        date: input.date,
+        status: "RESERVED",
+      },
+      select: {
+        id: true,
+        parkingSpot: {
+          select: {
+            id: true,
+            name: true,
+            charger: true,
           },
         },
-      });
-    },
-  };
+      },
+    });
+  },
+} satisfies ParkingReservationRepository;

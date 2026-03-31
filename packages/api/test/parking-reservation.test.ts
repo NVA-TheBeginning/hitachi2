@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { ParkingReservationRepository } from "../src/modules/parking-reservation/application/reserve-parking-spot";
 import { reserveParkingSpot } from "../src/modules/parking-reservation/application/reserve-parking-spot";
 import {
   NoParkingSpotAvailableError,
@@ -26,7 +27,7 @@ describe("reserveParkingSpot", () => {
       async countAvailableParkingSpots() {
         return 2;
       },
-      async createReservation(input: { parkingSpotId: string }) {
+      async createReservation(input) {
         reservations.push(input.parkingSpotId);
 
         return {
@@ -37,7 +38,7 @@ describe("reserveParkingSpot", () => {
               : { id: "spot-a02", name: "A02", charger: false },
         };
       },
-    };
+    } satisfies ParkingReservationRepository;
 
     const result = await reserveParkingSpot(repository, {
       date: "2026-04-01",
@@ -65,7 +66,7 @@ describe("reserveParkingSpot", () => {
       async createReservation() {
         throw new Error("should not create reservation");
       },
-    };
+    } satisfies ParkingReservationRepository;
 
     expect(
       reserveParkingSpot(repository, {
@@ -91,7 +92,7 @@ describe("reserveParkingSpot", () => {
       async createReservation() {
         throw new Error("should not create reservation");
       },
-    };
+    } satisfies ParkingReservationRepository;
 
     expect(
       reserveParkingSpot(repository, {
