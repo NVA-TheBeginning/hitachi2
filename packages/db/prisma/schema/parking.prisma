@@ -1,0 +1,53 @@
+enum ReservationStatus {
+  RESERVED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
+}
+
+model Car {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  electric     Boolean       @default(false)
+  reservations Reservation[]
+
+  @@index([userId])
+  @@map("car")
+}
+
+model ParkingSpot {
+  id           String        @id @default(cuid())
+  name         String
+  charger      Boolean       @default(false)
+  available    Boolean       @default(true)
+  reservations Reservation[]
+
+  @@map("parking_spot")
+}
+
+model Reservation {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carId         String
+  car           Car               @relation(fields: [carId], references: [id])
+  parkingSpotId String
+  parkingSpot   ParkingSpot       @relation(fields: [parkingSpotId], references: [id])
+  status        ReservationStatus @default(RESERVED)
+  date          DateTime
+  checkIn       CheckIn?
+
+  @@index([userId])
+  @@index([parkingSpotId])
+  @@map("reservation")
+}
+
+model CheckIn {
+  id            String      @id @default(cuid())
+  reservationId String      @unique
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  checkedAt     DateTime    @default(now())
+
+  @@map("check_in")
+}
