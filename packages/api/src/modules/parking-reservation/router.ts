@@ -1,10 +1,14 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
-import { publicProcedure } from "../../index";
+import { protectedProcedure, publicProcedure } from "../../index";
+import { checkInReservation } from "./application/check-in-reservation";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
   NoParkingSpotAvailableError,
+  ReservationAlreadyCheckedInError,
+  ReservationForbiddenError,
+  ReservationNotFoundError,
   SeedDataMissingError,
 } from "./domain/errors";
 import { prismaParkingReservationRepository } from "./infrastructure/prisma-parking-reservation-repository";
@@ -38,6 +42,31 @@ export const parkingReservationRouter = {
           throw new ORPCError("PRECONDITION_FAILED", {
             message: error.message,
           });
+        }
+
+        throw error;
+      }
+    }),
+
+  checkIn: protectedProcedure
+    .input(z.object({ reservationId: z.string() }))
+    .handler(async ({ input, context }) => {
+      try {
+        return await checkInReservation(prismaParkingReservationRepository, {
+          reservationId: input.reservationId,
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        if (error instanceof ReservationNotFoundError) {
+          throw new ORPCError("NOT_FOUND", { message: error.message });
+        }
+
+        if (error instanceof ReservationForbiddenError) {
+          throw new ORPCError("FORBIDDEN", { message: error.message });
+        }
+
+        if (error instanceof ReservationAlreadyCheckedInError) {
+          throw new ORPCError("CONFLICT", { message: error.message });
         }
 
         throw error;
