@@ -73,6 +73,26 @@ async function seedParkingSpots() {
   console.log(`Created ${spots.length} parking spots.`);
 }
 
+async function seedCar() {
+  const user = await prisma.user.findUnique({
+    where: { email: "test@user.com" },
+  });
+  if (!user) {
+    console.log("User not found, skipping car seed.");
+    return;
+  }
+
+  const existing = await prisma.car.findFirst({ where: { userId: user.id } });
+  if (existing) {
+    console.log("Car already seeded, skipping.");
+    return;
+  }
+
+  await prisma.car.create({ data: { userId: user.id, electric: false } });
+  console.log("Created car for test@user.com.");
+}
+
 await seedUser();
 await seedParkingSpots();
+await seedCar();
 await prisma.$disconnect();
