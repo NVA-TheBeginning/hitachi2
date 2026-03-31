@@ -22,6 +22,10 @@ export type ParkingReservationRepository = {
     parkingSpotId: string;
     date: Date;
   }): Promise<{ id: string; parkingSpot: ParkingSpotSummary }>;
+  findReservationById(
+    id: string,
+  ): Promise<{ id: string; userId: string; status: string } | null>;
+  checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
 };
 
 export function toReservationDate(date: string) {
