@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 
+import { ParkingReservationCard } from "@/components/parking-reservation-card";
 import { Button } from "@/components/ui/button";
 import { orpc } from "@/utils/orpc";
 
@@ -81,6 +82,8 @@ export default function Home() {
             </Button>
           </div>
         </section>
+
+        <ParkingReservationCard />
       </div>
     </div>
   );
