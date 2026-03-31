@@ -20,6 +20,8 @@ env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
   TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
   BETTER_AUTH_SECRET: supersecretkeyforcisupersecretkeyforci
+  BETTER_AUTH_URL: http://localhost:3001
+  CORS_ORIGIN: http://localhost:3000
 
 jobs:
   test:
@@ -62,7 +64,7 @@ jobs:
       run: bun ci
 
     - name: Setup database
-      run: bun --bun run db:push
+      run: bun --bun run db:push && bun --bun run db:seed
 
     - name: Build
       run: bun --bun run build:ci
