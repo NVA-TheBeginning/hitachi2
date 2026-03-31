@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { toReservationDate } from "@api/helpers";
 import prisma from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
@@ -17,10 +18,7 @@ afterEach(async () => {
   await prisma.reservation.deleteMany({
     where: {
       date: {
-        in: [
-          new Date(`${SUCCESS_DATE}T00:00:00.000Z`),
-          new Date(`${CONFLICT_DATE}T00:00:00.000Z`),
-        ],
+        in: [toReservationDate(SUCCESS_DATE), toReservationDate(CONFLICT_DATE)],
       },
     },
   });
@@ -54,7 +52,7 @@ describe("parking-reservation.reserveParkingSpot", () => {
         userId: actor.userId,
         carId: actor.id,
         parkingSpotId: spot.id,
-        date: new Date(`${CONFLICT_DATE}T00:00:00.000Z`),
+        date: toReservationDate(CONFLICT_DATE),
         status: "RESERVED" as const,
       })),
     });

@@ -5,7 +5,9 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@api/types": ["../../packages/api/src/types/index.ts"],
+      "@api/helpers": ["../../packages/api/src/helpers/index.ts"]
     },
     "jsx": "react-jsx"
   }

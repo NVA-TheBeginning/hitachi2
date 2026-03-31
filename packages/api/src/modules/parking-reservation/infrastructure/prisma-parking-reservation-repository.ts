@@ -1,6 +1,5 @@
-import prisma from "@hitachi2/db";
-
-import type { ParkingReservationRepository } from "../application/reserve-parking-spot";
+import type { ParkingReservationRepository } from "@api/types";
+import prisma, { type ReservationStatus } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
   id: true,
@@ -109,7 +108,7 @@ export const prismaParkingReservationRepository = {
   },
   async findReservationById(
     id,
-  ): Promise<{ id: string; userId: string; status: string } | null> {
+  ): Promise<{ id: string; userId: string; status: ReservationStatus } | null> {
     return prisma.reservation.findUnique({
       where: { id },
       select: { id: true, userId: true, status: true },
