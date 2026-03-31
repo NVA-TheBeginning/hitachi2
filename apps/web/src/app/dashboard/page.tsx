@@ -15,9 +15,7 @@ export default async function DashboardPage() {
       <div className="grid gap-6">
         <section className="rounded-lg border p-4">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Welcome {session.user.name}
-          </p>
+          <p className="text-muted-foreground mt-2">Welcome {session.user.name}</p>
         </section>
 
         <ParkingReservationCard />

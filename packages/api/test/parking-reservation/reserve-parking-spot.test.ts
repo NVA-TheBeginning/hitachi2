@@ -1,13 +1,6 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { toReservationDate } from "@api/helpers";
-import prisma, { UserRole } from "@hitachi2/db";
+import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
 import { createContext } from "../helpers";
@@ -58,11 +51,7 @@ const managerCtx = createContext(TEST_MANAGER);
 
 describe("parking-reservation.reserveParkingSpot", () => {
   test("should reserve the first available spot", async () => {
-    const result = await call(
-      appRouter.reserveParkingSpot,
-      { date: SUCCESS_DATE },
-      employeeCtx,
-    );
+    const result = await call(appRouter.reserveParkingSpot, { date: SUCCESS_DATE }, employeeCtx);
 
     expect(result.reservationId).toBeDefined();
     expect(result.parkingSpot.name).toBeDefined();
@@ -74,27 +63,27 @@ describe("parking-reservation.reserveParkingSpot", () => {
       where: { available: true },
       select: { id: true },
     });
-    const actor = await prisma.car.findFirst({ orderBy: { id: "asc" } });
+    const actor = await prisma.car.findFirstOrThrow({ orderBy: { id: "asc" } });
 
     await prisma.reservation.createMany({
       data: spots.map((spot) => ({
-        userId: actor?.userId,
-        carId: actor?.id,
+        userId: actor.userId,
+        carId: actor.id,
         parkingSpotId: spot.id,
         date: toReservationDate(CONFLICT_DATE),
-        status: "RESERVED" as const,
+        status: ReservationStatus.RESERVED,
       })),
     });
 
-    expect(
-      call(appRouter.reserveParkingSpot, { date: CONFLICT_DATE }, employeeCtx),
-    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(call(appRouter.reserveParkingSpot, { date: CONFLICT_DATE }, employeeCtx)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
   });
 
   test("should throw BAD_REQUEST on invalid date format", async () => {
-    expect(
-      call(appRouter.reserveParkingSpot, { date: "01-06-2099" }, employeeCtx),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(call(appRouter.reserveParkingSpot, { date: "01-06-2099" }, employeeCtx)).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
   });
 
   test("should throw FORBIDDEN when employee exceeds 5 reservations", async () => {
@@ -103,29 +92,25 @@ describe("parking-reservation.reserveParkingSpot", () => {
       take: 6,
       select: { id: true },
     });
-    const actor = await prisma.car.findFirst({ orderBy: { id: "asc" } });
+    const actor = await prisma.car.findFirstOrThrow({ orderBy: { id: "asc" } });
 
     await prisma.reservation.createMany({
       data: spots.map((spot) => ({
         userId: TEST_USER.id,
-        carId: actor?.id,
+        carId: actor.id,
         parkingSpotId: spot.id,
         date: toReservationDate("2099-07-01"),
-        status: "RESERVED" as const,
+        status: ReservationStatus.RESERVED,
       })),
     });
 
-    expect(
-      call(appRouter.reserveParkingSpot, { date: "2099-07-07" }, employeeCtx),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(call(appRouter.reserveParkingSpot, { date: "2099-07-07" }, employeeCtx)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 
   test("should allow manager to have up to 30 reservations", async () => {
-    const result = await call(
-      appRouter.reserveParkingSpot,
-      { date: SUCCESS_DATE },
-      managerCtx,
-    );
+    const result = await call(appRouter.reserveParkingSpot, { date: SUCCESS_DATE }, managerCtx);
 
     expect(result.reservationId).toBeDefined();
   });

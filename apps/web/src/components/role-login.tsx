@@ -5,14 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
 
@@ -41,10 +34,7 @@ const TEST_USERS: Record<Role, TestUser[]> = {
   ],
 };
 
-const ROLE_META: Record<
-  Role,
-  { label: string; description: string; icon: React.ReactNode }
-> = {
+const ROLE_META: Record<Role, { label: string; description: string; icon: React.ReactNode }> = {
   EMPLOYEE: {
     label: "Employee",
     description: "Make parking reservations",
@@ -62,11 +52,7 @@ const ROLE_META: Record<
   },
 };
 
-export default function RoleLogin({
-  onManualLogin,
-}: {
-  onManualLogin: () => void;
-}) {
+export default function RoleLogin({ onManualLogin }: { onManualLogin: () => void }) {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [loggingInEmail, setLoggingInEmail] = useState<string | null>(null);
@@ -92,9 +78,7 @@ export default function RoleLogin({
     <div className="mx-auto w-full max-w-2xl px-4 py-10">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold">Quick Login</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Select a role and choose a test account
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">Select a role and choose a test account</p>
       </div>
 
       {selectedRole === null ? (
@@ -114,9 +98,7 @@ export default function RoleLogin({
                     <CardDescription>{meta.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground text-xs">
-                      {TEST_USERS[role].map((u) => u.name).join(", ")}
-                    </p>
+                    <p className="text-muted-foreground text-xs">{TEST_USERS[role].map((u) => u.name).join(", ")}</p>
                   </CardContent>
                 </Card>
               );
@@ -132,18 +114,11 @@ export default function RoleLogin({
       ) : (
         <>
           <div className="mb-6 flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedRole(null)}
-              disabled={loggingInEmail !== null}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setSelectedRole(null)} disabled={loggingInEmail !== null}>
               <ArrowLeft className="mr-1 size-4" />
               Back
             </Button>
-            <h2 className="text-lg font-semibold">
-              {ROLE_META[selectedRole].label} Accounts
-            </h2>
+            <h2 className="text-lg font-semibold">{ROLE_META[selectedRole].label} Accounts</h2>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
