@@ -1,7 +1,7 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 import dotenv from "dotenv";
 import { defineConfig, env } from "prisma/config";
-import { existsSync } from "node:fs";
 
 // Load .env file only if it exists (for local development)
 // In CI, environment variables are set directly in the workflow
