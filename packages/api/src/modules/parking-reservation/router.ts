@@ -18,7 +18,7 @@ export const parkingReservationRouter = {
           .regex(
             /^\d{4}-\d{2}-\d{2}$/,
             "La date doit etre au format YYYY-MM-DD.",
-          )
+          ),
       }),
     )
     .handler(async ({ input }) => {
