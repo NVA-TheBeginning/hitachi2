@@ -8,4 +8,5 @@ const prisma = new PrismaClient({ adapter });
 
 export default prisma;
 
+export { Prisma } from "../prisma/generated/client";
 export type { ReservationStatus } from "../prisma/generated/enums";

@@ -1,5 +1,5 @@
 import type { ParkingReservationRepository } from "@api/types";
-import prisma, { type ReservationStatus } from "@hitachi2/db";
+import prisma, { Prisma, type ReservationStatus } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
   id: true,
@@ -105,6 +105,66 @@ export const prismaParkingReservationRepository = {
         },
       },
     });
+  },
+  async findAndCreateReservation(date, actor) {
+    const { start, end } = getReservationDayRange(date);
+
+    try {
+      return await prisma.$transaction(
+        async (tx) => {
+          const reservations = await tx.reservation.findMany({
+            where: {
+              date: { gte: start, lt: end },
+              status: "RESERVED",
+            },
+            select: { parkingSpotId: true },
+          });
+
+          const reservedSpotIds = reservations.map((r) => r.parkingSpotId);
+
+          const spot = await tx.parkingSpot.findFirst({
+            where: {
+              available: true,
+              ...(reservedSpotIds.length > 0
+                ? { id: { notIn: reservedSpotIds } }
+                : {}),
+            },
+            orderBy: { name: "asc" },
+            select: parkingSpotSummarySelect,
+          });
+
+          if (!spot) return null;
+
+          const [reservation, remainingSpots] = await Promise.all([
+            tx.reservation.create({
+              data: {
+                userId: actor.userId,
+                carId: actor.carId,
+                parkingSpotId: spot.id,
+                date,
+                status: "RESERVED",
+              },
+              select: {
+                id: true,
+                parkingSpot: { select: parkingSpotSummarySelect },
+              },
+            }),
+            tx.parkingSpot.count({
+              where: {
+                available: true,
+                id: { notIn: [...reservedSpotIds, spot.id] },
+              },
+            }),
+          ]);
+
+          return { ...reservation, remainingSpots };
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch {
+      // Serialization failure: a concurrent transaction took the last spot
+      return null;
+    }
   },
   async findReservationById(
     id,
