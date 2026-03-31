@@ -1,30 +1,15 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import Loader from "@/components/loader";
-import RoleLogin from "@/components/role-login";
-import SignInForm from "@/components/sign-in-form";
-import SignUpForm from "@/components/sign-up-form";
-import { authClient } from "@/lib/auth-client";
+import { getServerSession } from "@/lib/auth-session";
 
-type View = "picker" | "signin" | "signup";
+import LoginScreen from "./login-screen";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
-  const [view, setView] = useState<View>("picker");
+export default async function LoginPage() {
+  const session = await getServerSession();
 
-  useEffect(() => {
-    if (session) router.push("/dashboard");
-  }, [session, router]);
+  if (session?.user) {
+    redirect("/dashboard");
+  }
 
-  if (isPending || session) return <Loader />;
-
-  if (view === "signin")
-    return <SignInForm onSwitchToSignUp={() => setView("signup")} />;
-  if (view === "signup")
-    return <SignUpForm onSwitchToSignIn={() => setView("signin")} />;
-
-  return <RoleLogin onManualLogin={() => setView("signin")} />;
+  return <LoginScreen />;
 }

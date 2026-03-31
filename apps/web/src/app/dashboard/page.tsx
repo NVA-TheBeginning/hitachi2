@@ -1,27 +1,27 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { authClient } from "@/lib/auth-client";
-
-import Dashboard from "./dashboard";
+import { ParkingReservationCard } from "@/components/parking-reservation-card";
+import { getServerSession } from "@/lib/auth-session";
 
 export default async function DashboardPage() {
-  const session = await authClient.getSession({
-    fetchOptions: {
-      headers: await headers(),
-      throw: true,
-    },
-  });
+  const session = await getServerSession();
 
   if (!session?.user) {
     redirect("/login");
   }
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome {session.user.name}</p>
-      <Dashboard session={session} />
+    <div className="container mx-auto max-w-3xl px-4 py-6">
+      <div className="grid gap-6">
+        <section className="rounded-lg border p-4">
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            Welcome {session.user.name}
+          </p>
+        </section>
+
+        <ParkingReservationCard />
+      </div>
     </div>
   );
 }

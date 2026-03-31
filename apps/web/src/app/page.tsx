@@ -1,9 +1,9 @@
-import { ParkingReservationCard } from "@/components/parking-reservation-card";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <ParkingReservationCard />
-    </div>
-  );
+import { getServerSession } from "@/lib/auth-session";
+
+export default async function RootPage() {
+  const session = await getServerSession();
+
+  redirect(session?.user ? "/dashboard" : "/login");
 }
