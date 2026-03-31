@@ -20,8 +20,6 @@ env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
   TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
   BETTER_AUTH_SECRET: supersecretkeyforcisupersecretkeyforci
-  BETTER_AUTH_URL: http://localhost:3001
-  CORS_ORIGIN: http://localhost:3000
 
 jobs:
   test:
