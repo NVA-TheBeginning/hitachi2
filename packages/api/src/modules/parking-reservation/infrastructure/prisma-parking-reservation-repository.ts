@@ -1,6 +1,6 @@
 import prisma from "@hitachi2/db";
 
-import type { ParkingReservationRepository } from "../application/reserve-parking-spot";
+import type { ParkingReservationRepository } from "../application/parking-reservation.repository";
 
 function getReservationDayRange(date: Date) {
   const start = new Date(date);
@@ -51,6 +51,24 @@ export const prismaParkingReservationRepository = {
   },
   async findFirstAvailableSpot(excludedSpotIds) {
     return prisma.parkingSpot.findFirst({
+      where: {
+        available: true,
+        ...(excludedSpotIds.length > 0
+          ? { id: { notIn: excludedSpotIds } }
+          : {}),
+      },
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+        charger: true,
+      },
+    });
+  },
+  async findAvailableParkingSpots(excludedSpotIds) {
+    return prisma.parkingSpot.findMany({
       where: {
         available: true,
         ...(excludedSpotIds.length > 0

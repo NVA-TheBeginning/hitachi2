@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { ParkingReservationRepository } from "../src/modules/parking-reservation/application/reserve-parking-spot";
+import { getAvailableParkingSpots } from "../src/modules/parking-reservation/application/get-available-parking-spots";
+import type { ParkingReservationRepository } from "../src/modules/parking-reservation/application/parking-reservation.repository";
+import { getCurrentReservationDateString } from "../src/modules/parking-reservation/application/reservation-date";
 import { reserveParkingSpot } from "../src/modules/parking-reservation/application/reserve-parking-spot";
 import {
   NoParkingSpotAvailableError,
@@ -23,6 +25,9 @@ describe("reserveParkingSpot", () => {
         }
 
         return { id: "spot-a01", name: "A01", charger: true };
+      },
+      async findAvailableParkingSpots() {
+        return [];
       },
       async countAvailableParkingSpots() {
         return 2;
@@ -60,6 +65,9 @@ describe("reserveParkingSpot", () => {
       async findFirstAvailableSpot() {
         return null;
       },
+      async findAvailableParkingSpots() {
+        return [];
+      },
       async countAvailableParkingSpots() {
         return 1;
       },
@@ -86,6 +94,9 @@ describe("reserveParkingSpot", () => {
       async findFirstAvailableSpot() {
         return { id: "spot-a01", name: "A01", charger: false };
       },
+      async findAvailableParkingSpots() {
+        return [];
+      },
       async countAvailableParkingSpots() {
         return 10;
       },
@@ -99,5 +110,69 @@ describe("reserveParkingSpot", () => {
         date: "2026-04-01",
       }),
     ).rejects.toBeInstanceOf(SeedDataMissingError);
+  });
+});
+
+describe("getAvailableParkingSpots", () => {
+  test("should return available spots for today when no date filter is provided", async () => {
+    let capturedDate: Date | null = null;
+
+    const repository = {
+      async findReservedSpotIdsForDate(date) {
+        capturedDate = date;
+        return [];
+      },
+      async findAvailableParkingSpots(excludedSpotIds) {
+        expect(excludedSpotIds).toEqual([]);
+
+        return [
+          { id: "spot-a01", name: "A01", charger: true },
+          { id: "spot-a02", name: "A02", charger: false },
+        ];
+      },
+    } satisfies Pick<
+      ParkingReservationRepository,
+      "findAvailableParkingSpots" | "findReservedSpotIdsForDate"
+    >;
+
+    const result = await getAvailableParkingSpots(repository);
+    const expectedDate = getCurrentReservationDateString();
+
+    if (!capturedDate) {
+      throw new Error("expected findReservedSpotIdsForDate to be called");
+    }
+
+    const requestedDate = capturedDate as Date;
+
+    expect(requestedDate.toISOString()).toBe(
+      new Date(`${expectedDate}T00:00:00.000Z`).toISOString(),
+    );
+    expect(result.date).toBe(expectedDate);
+    expect(result.count).toBe(2);
+    expect(result.spots.map((spot) => spot.name)).toEqual(["A01", "A02"]);
+  });
+
+  test("should exclude reserved spots for the requested day", async () => {
+    const repository = {
+      async findReservedSpotIdsForDate() {
+        return ["spot-a01"];
+      },
+      async findAvailableParkingSpots(excludedSpotIds) {
+        expect(excludedSpotIds).toEqual(["spot-a01"]);
+
+        return [{ id: "spot-a02", name: "A02", charger: false }];
+      },
+    } satisfies Pick<
+      ParkingReservationRepository,
+      "findAvailableParkingSpots" | "findReservedSpotIdsForDate"
+    >;
+
+    const result = await getAvailableParkingSpots(repository, {
+      date: "2026-04-01",
+    });
+
+    expect(result.date).toBe("2026-04-01");
+    expect(result.count).toBe(1);
+    expect(result.spots[0]?.name).toBe("A02");
   });
 });

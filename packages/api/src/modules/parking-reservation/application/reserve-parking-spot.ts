@@ -2,31 +2,8 @@ import {
   NoParkingSpotAvailableError,
   SeedDataMissingError,
 } from "../domain/errors";
-
-type ParkingSpotSummary = {
-  id: string;
-  name: string;
-  charger: boolean;
-};
-
-export type ParkingReservationRepository = {
-  findReservationActor(): Promise<{ userId: string; carId: string } | null>;
-  findReservedSpotIdsForDate(date: Date): Promise<string[]>;
-  findFirstAvailableSpot(
-    excludedSpotIds: string[],
-  ): Promise<ParkingSpotSummary | null>;
-  countAvailableParkingSpots(): Promise<number>;
-  createReservation(input: {
-    userId: string;
-    carId: string;
-    parkingSpotId: string;
-    date: Date;
-  }): Promise<{ id: string; parkingSpot: ParkingSpotSummary }>;
-};
-
-export function toReservationDate(date: string) {
-  return new Date(`${date}T00:00:00.000Z`);
-}
+import type { ParkingReservationRepository } from "./parking-reservation.repository";
+import { toReservationDate } from "./reservation-date";
 
 export async function reserveParkingSpot(
   repository: ParkingReservationRepository,

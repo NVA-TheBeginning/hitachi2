@@ -31,7 +31,14 @@ const rpcHandler = new RPCHandler(appRouter, {
 const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
     new OpenAPIReferencePlugin({
+      docsProvider: "scalar",
       schemaConverters: [new ZodToJsonSchemaConverter()],
+      specGenerateOptions: {
+        info: {
+          title: "Hitachi2 API",
+          version: "1.0.0",
+        },
+      },
     }),
   ],
   interceptors: [
