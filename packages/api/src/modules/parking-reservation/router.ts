@@ -4,7 +4,6 @@ import { z } from "zod";
 import { publicProcedure } from "../../index";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
-  InvalidReservationDateError,
   NoParkingSpotAvailableError,
   SeedDataMissingError,
 } from "./domain/errors";
@@ -19,7 +18,7 @@ export const parkingReservationRouter = {
           .regex(
             /^\d{4}-\d{2}-\d{2}$/,
             "La date doit etre au format YYYY-MM-DD.",
-          ),
+          )
       }),
     )
     .handler(async ({ input }) => {
@@ -29,12 +28,6 @@ export const parkingReservationRouter = {
           input,
         );
       } catch (error) {
-        if (error instanceof InvalidReservationDateError) {
-          throw new ORPCError("BAD_REQUEST", {
-            message: error.message,
-          });
-        }
-
         if (error instanceof NoParkingSpotAvailableError) {
           throw new ORPCError("CONFLICT", {
             message: error.message,

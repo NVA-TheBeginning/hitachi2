@@ -1,5 +1,4 @@
 import {
-  InvalidReservationDateError,
   NoParkingSpotAvailableError,
   SeedDataMissingError,
 } from "../domain/errors";
@@ -41,25 +40,15 @@ export interface ReserveParkingSpotResult {
   remainingSpots: number;
 }
 
-export function normalizeReservationDate(date: string): Date {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw new InvalidReservationDateError();
-  }
-
-  const normalizedDate = new Date(`${date}T00:00:00.000Z`);
-
-  if (Number.isNaN(normalizedDate.getTime())) {
-    throw new InvalidReservationDateError();
-  }
-
-  return normalizedDate;
+export function toReservationDate(date: string): Date {
+  return new Date(`${date}T00:00:00.000Z`);
 }
 
 export async function reserveParkingSpot(
   repository: ParkingReservationRepository,
   input: ReserveParkingSpotInput,
 ): Promise<ReserveParkingSpotResult> {
-  const reservationDate = normalizeReservationDate(input.date);
+  const reservationDate = toReservationDate(input.date);
   const reservationActor = await repository.findReservationActor();
 
   if (!reservationActor) {

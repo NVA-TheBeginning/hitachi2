@@ -1,10 +1,3 @@
-export class InvalidReservationDateError extends Error {
-  constructor() {
-    super("La date de reservation est invalide.");
-    this.name = "InvalidReservationDateError";
-  }
-}
-
 export class SeedDataMissingError extends Error {
   constructor() {
     super(
