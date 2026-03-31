@@ -11,35 +11,28 @@ export async function reserveParkingSpot(
 ) {
   const reservationDate = toReservationDate(input.date);
 
-  const [reservationActor, availableSpotCount, reservedSpotIds] =
-    await Promise.all([
-      repository.findReservationActor(),
-      repository.countAvailableParkingSpots(),
-      repository.findReservedSpotIdsForDate(reservationDate),
-    ]);
+  const [reservationActor, availableSpotCount] = await Promise.all([
+    repository.findReservationActor(),
+    repository.countAvailableParkingSpots(),
+  ]);
 
   if (!reservationActor || availableSpotCount === 0) {
     throw new SeedDataMissingError();
   }
 
-  const reservedSpotCount = reservedSpotIds.length;
-  const parkingSpot = await repository.findFirstAvailableSpot(reservedSpotIds);
+  const reservation = await repository.findAndCreateReservation(
+    reservationDate,
+    reservationActor,
+  );
 
-  if (!parkingSpot) {
+  if (!reservation) {
     throw new NoParkingSpotAvailableError(input.date);
   }
-
-  const reservation = await repository.createReservation({
-    userId: reservationActor.userId,
-    carId: reservationActor.carId,
-    parkingSpotId: parkingSpot.id,
-    date: reservationDate,
-  });
 
   return {
     reservationId: reservation.id,
     date: input.date,
     parkingSpot: reservation.parkingSpot,
-    remainingSpots: Math.max(availableSpotCount - reservedSpotCount - 1, 0),
+    remainingSpots: reservation.remainingSpots,
   };
 }

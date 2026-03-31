@@ -24,6 +24,14 @@ export type ParkingReservationRepository = {
     parkingSpotId: string;
     date: Date;
   }): Promise<{ id: string; parkingSpot: ParkingSpotSummary }>;
+  findAndCreateReservation(
+    date: Date,
+    actor: { userId: string; carId: string },
+  ): Promise<{
+    id: string;
+    parkingSpot: ParkingSpotSummary;
+    remainingSpots: number;
+  } | null>;
   findReservationById(
     id: string,
   ): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
