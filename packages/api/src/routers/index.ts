@@ -1,7 +1,7 @@
 import prisma from "@hitachi2/db";
 import type { RouterClient } from "@orpc/server";
-
 import { protectedProcedure, publicProcedure } from "../index";
+import { parkingReservationRouter } from "../modules/parking-reservation/router";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -15,6 +15,7 @@ export const appRouter = {
       checkedAt: new Date().toISOString(),
     };
   }),
+  ...parkingReservationRouter,
   privateData: protectedProcedure.handler(({ context }) => {
     return {
       message: "This is private",
