@@ -1,10 +1,27 @@
-import type { IReservationRepository, ReservationActor } from "@api/types";
+import type { IReservationRepository, ReservationActor, UserReservationSummary } from "@api/types";
 import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
   id: true,
   name: true,
   charger: true,
+} as const;
+
+const userReservationSelect = {
+  id: true,
+  date: true,
+  status: true,
+  car: {
+    select: {
+      id: true,
+      name: true,
+      licensePlate: true,
+      electric: true,
+    },
+  },
+  parkingSpot: {
+    select: parkingSpotSummarySelect,
+  },
 } as const;
 
 function getReservationDayRange(date: Date) {
@@ -20,6 +37,18 @@ function buildAvailableSpotWhere(reservedSpotIds: string[], charger?: boolean) {
     available: true,
     ...(typeof charger === "boolean" ? { charger } : {}),
     ...(reservedSpotIds.length > 0 ? { id: { notIn: reservedSpotIds } } : {}),
+  };
+}
+
+function toUserReservationSummary(
+  reservation: Prisma.ReservationGetPayload<{ select: typeof userReservationSelect }>,
+): UserReservationSummary {
+  return {
+    id: reservation.id,
+    date: reservation.date,
+    status: reservation.status,
+    car: reservation.car,
+    parkingSpot: reservation.parkingSpot,
   };
 }
 
@@ -175,6 +204,32 @@ export class PrismaReservationRepository implements IReservationRepository {
         date: { gte: start, lt: end },
       },
       select: { id: true, status: true },
+    });
+  }
+
+  async getMyReservations(userId: string) {
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        userId,
+        status: ReservationStatus.RESERVED,
+      },
+      orderBy: [{ date: "asc" }, { parkingSpot: { name: "asc" } }],
+      select: userReservationSelect,
+    });
+
+    return reservations.map(toUserReservationSummary);
+  }
+
+  async findReservationById(reservationId: string) {
+    return prisma.reservation.findUnique({
+      where: { id: reservationId },
+      select: { id: true, userId: true, status: true },
+    });
+  }
+
+  async deleteReservation(reservationId: string) {
+    await prisma.reservation.delete({
+      where: { id: reservationId },
     });
   }
 
