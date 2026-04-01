@@ -30,8 +30,7 @@ export function ParkingReservationCard() {
         <div className="space-y-1">
           <h2 className="font-medium">Reservation de parking</h2>
           <p className="text-xs text-muted-foreground">
-            La reservation utilise la premiere voiture enregistree sur votre
-            compte.
+            La reservation utilise la premiere voiture enregistree sur votre compte.
           </p>
         </div>
 

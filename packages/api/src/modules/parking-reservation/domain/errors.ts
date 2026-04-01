@@ -7,9 +7,7 @@ export class SeedDataMissingError extends Error {
 
 export class UserCarMissingError extends Error {
   constructor() {
-    super(
-      "Aucune voiture n'est associee a votre compte. Ajoutez-en une depuis Mon compte avant de reserver.",
-    );
+    super("Aucune voiture n'est associee a votre compte. Ajoutez-en une depuis Mon compte avant de reserver.");
     this.name = "UserCarMissingError";
   }
 }

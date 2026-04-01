@@ -10,10 +10,7 @@ function normalizeLicensePlate(licensePlate: string) {
   return licensePlate.trim().toUpperCase();
 }
 
-export async function getMyAccount(
-  repository: AccountRepository,
-  userId: string,
-) {
+export async function getMyAccount(repository: AccountRepository, userId: string) {
   const account = await repository.findAccountByUserId(userId);
 
   if (!account) {
@@ -23,10 +20,7 @@ export async function getMyAccount(
   return account;
 }
 
-export async function updateMyAccount(
-  repository: AccountRepository,
-  input: { userId: string; name: string },
-) {
+export async function updateMyAccount(repository: AccountRepository, input: { userId: string; name: string }) {
   return repository.updateAccountName(input.userId, input.name.trim());
 }
 
@@ -84,10 +78,7 @@ export async function updateMyCar(
   });
 }
 
-export async function deleteMyCar(
-  repository: AccountRepository,
-  input: { userId: string; carId: string },
-) {
+export async function deleteMyCar(repository: AccountRepository, input: { userId: string; carId: string }) {
   const car = await repository.findCarByIdForUser(input.carId, input.userId);
 
   if (!car) {

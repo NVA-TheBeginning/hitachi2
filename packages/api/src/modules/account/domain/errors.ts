@@ -21,9 +21,7 @@ export class DuplicateLicensePlateError extends Error {
 
 export class CarDeletionForbiddenError extends Error {
   constructor(carId: string) {
-    super(
-      `La voiture ${carId} ne peut pas etre supprimee car elle est liee a des reservations.`,
-    );
+    super(`La voiture ${carId} ne peut pas etre supprimee car elle est liee a des reservations.`);
     this.name = "CarDeletionForbiddenError";
   }
 }

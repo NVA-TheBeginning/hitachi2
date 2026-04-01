@@ -1,6 +1,5 @@
-import prisma from "@hitachi2/db";
-
 import type { AccountRepository } from "@api/types";
+import prisma from "@hitachi2/db";
 
 const carSelect = {
   id: true,

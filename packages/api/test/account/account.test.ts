@@ -199,11 +199,7 @@ afterAll(async () => {
 
 describe("account routes", () => {
   test("should return the authenticated account with its cars", async () => {
-    const result = await call(
-      appRouter.getMyAccount,
-      undefined,
-      createAuthedContext(USER_1),
-    );
+    const result = await call(appRouter.getMyAccount, undefined, createAuthedContext(USER_1));
 
     expect(result.id).toBe(USER_1.id);
     expect(result.name).toBe(USER_1.name);
@@ -214,17 +210,13 @@ describe("account routes", () => {
   });
 
   test("should throw UNAUTHORIZED when account is not authenticated", async () => {
-    await expect(
-      call(appRouter.getMyAccount, undefined, unauthenticatedContext),
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(call(appRouter.getMyAccount, undefined, unauthenticatedContext)).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   test("should update the authenticated account name", async () => {
-    const result = await call(
-      appRouter.updateMyAccount,
-      { name: "Nouvel utilisateur" },
-      createAuthedContext(USER_1),
-    );
+    const result = await call(appRouter.updateMyAccount, { name: "Nouvel utilisateur" }, createAuthedContext(USER_1));
 
     expect(result.name).toBe("Nouvel utilisateur");
 
@@ -312,11 +304,7 @@ describe("account routes", () => {
       },
     });
 
-    const result = await call(
-      appRouter.deleteMyCar,
-      { carId: extraCar.id },
-      createAuthedContext(USER_1),
-    );
+    const result = await call(appRouter.deleteMyCar, { carId: extraCar.id }, createAuthedContext(USER_1));
 
     expect(result.deleted).toBe(true);
 
@@ -337,12 +325,8 @@ describe("account routes", () => {
       },
     });
 
-    await expect(
-      call(
-        appRouter.deleteMyCar,
-        { carId: CAR_1.id },
-        createAuthedContext(USER_1),
-      ),
-    ).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(call(appRouter.deleteMyCar, { carId: CAR_1.id }, createAuthedContext(USER_1))).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
   });
 });
