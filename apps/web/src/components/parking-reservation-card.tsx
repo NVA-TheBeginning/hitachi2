@@ -15,6 +15,7 @@ export function ParkingReservationCard() {
   const [selectedCarId, setSelectedCarId] = useState("");
   const accountQuery = useQuery(orpc.getMyAccount.queryOptions());
   const queryClient = useQueryClient();
+  const account = accountQuery.data;
   const cars = accountQuery.data?.cars ?? [];
   const resolvedSelectedCarId = cars.some((car) => car.id === selectedCarId) ? selectedCarId : (cars[0]?.id ?? "");
   const selectedCar = cars.find((car) => car.id === resolvedSelectedCarId) ?? null;
@@ -22,9 +23,14 @@ export function ParkingReservationCard() {
   const reservationMutation = useMutation(
     orpc.reserveParkingSpot.mutationOptions({
       onSuccess: async (data) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpc.getMyReservations.queryOptions().queryKey,
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyReservations.queryOptions().queryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyAccount.queryOptions().queryKey,
+          }),
+        ]);
         toast.success(`Place ${data.parkingSpot.name} reservee.`);
       },
       onError: (error) => {
@@ -38,6 +44,12 @@ export function ParkingReservationCard() {
       <div className="space-y-4">
         <div className="space-y-1">
           <h2 className="font-medium">Reservation de parking</h2>
+          {account ? (
+            <p className="text-muted-foreground text-sm">
+              Quota: {account.remainingReservationCount} reservation(s) restante(s) sur {account.reservationLimit}{" "}
+              pour le role {account.role}.
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
@@ -93,7 +105,7 @@ export function ParkingReservationCard() {
           </p>
         ) : null}
 
-        {accountQuery.data && cars.length === 0 ? (
+        {account && cars.length === 0 ? (
           <p className="text-sm text-destructive">Ajoute d'abord une voiture dans Mon compte pour pouvoir reserver.</p>
         ) : null}
 

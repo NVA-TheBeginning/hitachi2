@@ -1,3 +1,4 @@
+import { getReservationLimit } from "@api/helpers";
 import type { IAccountRepository } from "@api/types";
 import prisma, { Prisma } from "@hitachi2/db";
 import { CarLicensePlateAlreadyUsedError } from "../domain/errors";
@@ -42,6 +43,11 @@ export class PrismaAccountRepository implements IAccountRepository {
         email: true,
         role: true,
         createdAt: true,
+        _count: {
+          select: {
+            reservations: true,
+          },
+        },
         cars: {
           orderBy: [{ createdAt: "asc" }, { id: "asc" }],
           select: userCarSelect,
@@ -53,8 +59,18 @@ export class PrismaAccountRepository implements IAccountRepository {
       return null;
     }
 
+    const reservationCount = account._count.reservations;
+    const reservationLimit = getReservationLimit(account.role);
+
     return {
-      ...account,
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      role: account.role,
+      createdAt: account.createdAt,
+      reservationCount,
+      reservationLimit,
+      remainingReservationCount: Math.max(0, reservationLimit - reservationCount),
       cars: account.cars.map(toUserCarSummary),
     };
   }

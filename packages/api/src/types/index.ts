@@ -83,6 +83,9 @@ export interface IAccountRepository {
     email: string;
     role: UserRole;
     createdAt: Date;
+    reservationCount: number;
+    reservationLimit: number;
+    remainingReservationCount: number;
     cars: UserCarSummary[];
   } | null>;
   findUserCarById(userId: string, carId: string): Promise<UserCarSummary | null>;

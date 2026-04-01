@@ -96,6 +96,9 @@ describe("account router", () => {
 
     expect(result.id).toBe(TEST_USER.id);
     expect(result.email).toBe(TEST_USER.email);
+    expect(result.reservationCount).toBe(0);
+    expect(result.reservationLimit).toBe(5);
+    expect(result.remainingReservationCount).toBe(5);
     expect(result.cars).toHaveLength(1);
     expect(result.cars[0]?.licensePlate).toBe("AC-001-AA");
   });
