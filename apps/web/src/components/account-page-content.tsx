@@ -200,7 +200,11 @@ function ProfileCard({ account, onRefresh }: { account: AccountData; onRefresh: 
             </div>
             <div className="space-y-2">
               <Label htmlFor="profile-reservation-remaining">Reservations restantes</Label>
-              <Input id="profile-reservation-remaining" value={account.reservationQuota.remainingReservations} disabled />
+              <Input
+                id="profile-reservation-remaining"
+                value={account.reservationQuota.remainingReservations}
+                disabled
+              />
             </div>
           </div>
 

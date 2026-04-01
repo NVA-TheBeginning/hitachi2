@@ -1,5 +1,6 @@
 import { toReservationDate } from "@api/helpers";
 import type { IReservationRepository } from "@api/types";
+import { getMaxReservationsForRole } from "../../../helpers/reservation-limits";
 import {
   NoCarLinkedToUserError,
   NoParkingSpotAvailableError,
@@ -7,7 +8,6 @@ import {
   ReservationLimitExceededError,
   SeedDataMissingError,
 } from "../domain/errors";
-import { getMaxReservationsForRole } from "../../../helpers/reservation-limits";
 
 export async function reserveParkingSpot(
   repository: IReservationRepository,

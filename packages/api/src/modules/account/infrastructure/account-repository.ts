@@ -1,7 +1,7 @@
 import type { IAccountRepository } from "@api/types";
 import prisma, { Prisma, ReservationStatus } from "@hitachi2/db";
-import { CarLicensePlateAlreadyUsedError } from "../domain/errors";
 import { getMaxReservationsForRole } from "../../../helpers/reservation-limits";
+import { CarLicensePlateAlreadyUsedError } from "../domain/errors";
 
 const userCarSelect = {
   id: true,
