@@ -1,13 +1,6 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { getCurrentReservationDateString } from "@api/helpers";
-import prisma from "@hitachi2/db";
+import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
 
@@ -15,7 +8,7 @@ const USER = {
   id: "test-list-user-1",
   name: "List User",
   email: "test-list-1@test.com",
-  emailVerified: true as const,
+  emailVerified: true,
 };
 
 const CAR = {
@@ -108,7 +101,7 @@ async function createReservation(parkingSpotId: string, date: string) {
       carId: CAR.id,
       parkingSpotId,
       date: new Date(`${date}T00:00:00.000Z`),
-      status: "RESERVED",
+      status: ReservationStatus.RESERVED,
     },
   });
 }
@@ -120,15 +113,9 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     await createReservation(RESERVED_SPOT.id, targetDate);
     await createReservation(FREE_SPOT.id, "2099-08-02");
 
-    const result = await call(
-      appRouter.getAvailableParkingSpots,
-      { date: targetDate },
-      context,
-    );
+    const result = await call(appRouter.getAvailableParkingSpots, { date: targetDate }, context);
 
-    const spotNames = result.parkingSpots.map(
-      (parkingSpot) => parkingSpot.name,
-    );
+    const spotNames = result.parkingSpots.map((parkingSpot) => parkingSpot.name);
 
     expect(result.date).toBe(targetDate);
     expect(spotNames).toContain(FREE_SPOT.name);
@@ -141,15 +128,9 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
 
     await createReservation(FREE_SPOT.id, today);
 
-    const result = await call(
-      appRouter.getAvailableParkingSpots,
-      undefined,
-      context,
-    );
+    const result = await call(appRouter.getAvailableParkingSpots, undefined, context);
 
-    const spotNames = result.parkingSpots.map(
-      (parkingSpot) => parkingSpot.name,
-    );
+    const spotNames = result.parkingSpots.map((parkingSpot) => parkingSpot.name);
 
     expect(result.date).toBe(today);
     expect(spotNames).toContain(RESERVED_SPOT.name);
@@ -161,15 +142,9 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
 
     await createReservation(FREE_SPOT.id, today);
 
-    const result = await call(
-      appRouter.getAvailableParkingSpots,
-      { date: "" },
-      context,
-    );
+    const result = await call(appRouter.getAvailableParkingSpots, { date: "" }, context);
 
-    const spotNames = result.parkingSpots.map(
-      (parkingSpot) => parkingSpot.name,
-    );
+    const spotNames = result.parkingSpots.map((parkingSpot) => parkingSpot.name);
 
     expect(result.date).toBe(today);
     expect(spotNames).toContain(RESERVED_SPOT.name);
@@ -177,8 +152,8 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
   });
 
   test("should throw BAD_REQUEST on invalid date format", async () => {
-    await expect(
-      call(appRouter.getAvailableParkingSpots, { date: "31-03-2026" }, context),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(call(appRouter.getAvailableParkingSpots, { date: "31-03-2026" }, context)).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
   });
 });

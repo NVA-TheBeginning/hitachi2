@@ -34,15 +34,9 @@ export default function StatusContent() {
       <section className="rounded-lg border p-4">
         <h2 className="mb-2 font-medium">API Status</h2>
         <div className="flex items-center gap-2">
-          <div
-            className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-          />
+          <div className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`} />
           <span className="text-sm text-muted-foreground">
-            {healthCheck.isLoading
-              ? "Checking..."
-              : healthCheck.data
-                ? "Connected"
-                : "Disconnected"}
+            {healthCheck.isLoading ? "Checking..." : healthCheck.data ? "Connected" : "Disconnected"}
           </span>
         </div>
       </section>
@@ -53,9 +47,7 @@ export default function StatusContent() {
             <h2 className="font-medium">Database Status</h2>
             <div className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full ${dbStatusClass}`} />
-              <span className="text-sm text-muted-foreground">
-                {dbStatusLabel}
-              </span>
+              <span className="text-sm text-muted-foreground">{dbStatusLabel}</span>
             </div>
             {dbCheck.isSuccess ? (
               <p className="text-xs text-muted-foreground">
@@ -66,17 +58,10 @@ export default function StatusContent() {
                 }).format(new Date(dbCheck.data.checkedAt))}
               </p>
             ) : null}
-            {dbCheck.isError ? (
-              <p className="text-xs text-destructive">
-                {dbCheck.error.message}
-              </p>
-            ) : null}
+            {dbCheck.isError ? <p className="text-xs text-destructive">{dbCheck.error.message}</p> : null}
           </div>
 
-          <Button
-            onClick={() => void dbCheck.refetch()}
-            disabled={dbCheck.isFetching}
-          >
+          <Button onClick={() => void dbCheck.refetch()} disabled={dbCheck.isFetching}>
             {dbCheck.isFetching ? "Verification..." : "Checker la BDD"}
           </Button>
         </div>

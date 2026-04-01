@@ -62,22 +62,16 @@ export function ParkingReservationCard() {
         {reservationMutation.data ? (
           <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-3 text-sm">
             <p>
-              Place reservee:{" "}
-              <strong>{reservationMutation.data.parkingSpot.name}</strong>
+              Place reservee: <strong>{reservationMutation.data.parkingSpot.name}</strong>
             </p>
             <p>Date: {reservationMutation.data.date}</p>
-            <p>
-              Borne de recharge:{" "}
-              {reservationMutation.data.parkingSpot.charger ? "Oui" : "Non"}
-            </p>
+            <p>Borne de recharge: {reservationMutation.data.parkingSpot.charger ? "Oui" : "Non"}</p>
             <p>Places restantes: {reservationMutation.data.remainingSpots}</p>
           </div>
         ) : null}
 
         {reservationMutation.isError ? (
-          <p className="text-sm text-destructive">
-            {reservationMutation.error.message}
-          </p>
+          <p className="text-sm text-destructive">{reservationMutation.error.message}</p>
         ) : null}
       </div>
     </section>

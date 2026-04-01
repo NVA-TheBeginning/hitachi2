@@ -10,6 +10,8 @@ export type ParkingSpotSummary = {
   charger: boolean;
 };
 
+export interface IReservationRepository {
+  findReservationActor(): Promise<{ userId: string; carId: string } | null>;
 export type CarSummary = {
   id: string;
   name: string;
@@ -32,9 +34,7 @@ export type ParkingReservationRepository = {
     userId: string,
   ): Promise<{ userId: string; carId: string } | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
-  findFirstAvailableSpot(
-    excludedSpotIds: string[],
-  ): Promise<ParkingSpotSummary | null>;
+  findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
   findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
   countAvailableParkingSpots(): Promise<number>;
   createReservation(input: {
@@ -51,11 +51,10 @@ export type ParkingReservationRepository = {
     parkingSpot: ParkingSpotSummary;
     remainingSpots: number;
   } | null>;
-  findReservationById(
-    id: string,
-  ): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
+  findReservationById(id: string): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
   checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
-};
+  getUserReservations(userId: string): Promise<{ reservationCount: number; role: UserRole }>;
+}
 
 export type AccountRepository = {
   findAccountByUserId(userId: string): Promise<AccountSummary | null>;

@@ -1,5 +1,5 @@
-import type { ParkingReservationRepository } from "@api/types";
-import prisma, { Prisma, type ReservationStatus } from "@hitachi2/db";
+import type { IReservationRepository } from "@api/types";
+import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
   id: true,
@@ -15,9 +15,13 @@ function getReservationDayRange(date: Date) {
   return { start, end };
 }
 
+export class PrismaReservationRepository implements IReservationRepository {
+  async findReservationActor() {
 export const prismaParkingReservationRepository = {
   async findReservationActor(userId) {
     const car = await prisma.car.findFirst({
+      orderBy: { id: "asc" },
+      select: { id: true, userId: true },
       where: {
         userId,
       },
@@ -30,86 +34,72 @@ export const prismaParkingReservationRepository = {
       },
     });
 
-    if (!car) {
-      return null;
-    }
+    if (!car) return null;
 
-    return {
-      userId: car.userId,
-      carId: car.id,
-    };
-  },
-  async findReservedSpotIdsForDate(date) {
+    return { userId: car.userId, carId: car.id };
+  }
+
+  async findReservedSpotIdsForDate(date: Date): Promise<string[]> {
     const { start, end } = getReservationDayRange(date);
 
     const reservations = await prisma.reservation.findMany({
       where: {
-        date: {
-          gte: start,
-          lt: end,
-        },
-        status: "RESERVED",
+        date: { gte: start, lt: end },
+        status: ReservationStatus.RESERVED,
       },
-      select: {
-        parkingSpotId: true,
-      },
+      select: { parkingSpotId: true },
     });
 
-    return reservations.map((reservation) => reservation.parkingSpotId);
-  },
-  async findFirstAvailableSpot(excludedSpotIds) {
+    return reservations.map((r) => r.parkingSpotId);
+  }
+
+  async findFirstAvailableSpot(excludedSpotIds: string[]) {
     return prisma.parkingSpot.findFirst({
       where: {
         available: true,
-        ...(excludedSpotIds.length > 0
-          ? { id: { notIn: excludedSpotIds } }
-          : {}),
+        ...(excludedSpotIds.length > 0 ? { id: { notIn: excludedSpotIds } } : {}),
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: { name: "asc" },
       select: parkingSpotSummarySelect,
     });
-  },
-  async findAvailableSpots(excludedSpotIds) {
+  }
+
+  async findAvailableSpots(excludedSpotIds: string[]) {
     return prisma.parkingSpot.findMany({
       where: {
         available: true,
-        ...(excludedSpotIds.length > 0
-          ? { id: { notIn: excludedSpotIds } }
-          : {}),
+        ...(excludedSpotIds.length > 0 ? { id: { notIn: excludedSpotIds } } : {}),
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: { name: "asc" },
       select: parkingSpotSummarySelect,
     });
-  },
-  async countAvailableParkingSpots() {
-    return prisma.parkingSpot.count({
-      where: {
-        available: true,
-      },
-    });
-  },
-  async createReservation(input) {
+  }
+
+  async countAvailableParkingSpots(): Promise<number> {
+    return prisma.parkingSpot.count({ where: { available: true } });
+  }
+
+  async createReservation(input: { userId: string; carId: string; parkingSpotId: string; date: Date }) {
     return prisma.reservation.create({
       data: {
-        userId: input.userId,
-        carId: input.carId,
-        parkingSpotId: input.parkingSpotId,
-        date: input.date,
-        status: "RESERVED",
+        ...input,
+        status: ReservationStatus.RESERVED,
       },
       select: {
         id: true,
-        parkingSpot: {
-          select: parkingSpotSummarySelect,
-        },
+        parkingSpot: { select: parkingSpotSummarySelect },
       },
     });
-  },
-  async findAndCreateReservation(date, actor) {
+  }
+
+  async findAndCreateReservation(
+    date: Date,
+    actor: { userId: string; carId: string },
+  ): Promise<{
+    id: string;
+    parkingSpot: { id: string; name: string; charger: boolean };
+    remainingSpots: number;
+  } | null> {
     const { start, end } = getReservationDayRange(date);
 
     try {
@@ -118,7 +108,7 @@ export const prismaParkingReservationRepository = {
           const reservations = await tx.reservation.findMany({
             where: {
               date: { gte: start, lt: end },
-              status: "RESERVED",
+              status: ReservationStatus.RESERVED,
             },
             select: { parkingSpotId: true },
           });
@@ -128,9 +118,7 @@ export const prismaParkingReservationRepository = {
           const spot = await tx.parkingSpot.findFirst({
             where: {
               available: true,
-              ...(reservedSpotIds.length > 0
-                ? { id: { notIn: reservedSpotIds } }
-                : {}),
+              ...(reservedSpotIds.length > 0 ? { id: { notIn: reservedSpotIds } } : {}),
             },
             orderBy: { name: "asc" },
             select: parkingSpotSummarySelect,
@@ -145,7 +133,7 @@ export const prismaParkingReservationRepository = {
                 carId: actor.carId,
                 parkingSpotId: spot.id,
                 date,
-                status: "RESERVED",
+                status: ReservationStatus.RESERVED,
               },
               select: {
                 id: true,
@@ -165,23 +153,22 @@ export const prismaParkingReservationRepository = {
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
     } catch {
-      // Serialization failure: a concurrent transaction took the last spot
       return null;
     }
-  },
-  async findReservationById(
-    id,
-  ): Promise<{ id: string; userId: string; status: ReservationStatus } | null> {
+  }
+
+  async findReservationById(id: string) {
     return prisma.reservation.findUnique({
       where: { id },
       select: { id: true, userId: true, status: true },
     });
-  },
-  async checkInReservation(reservationId) {
-    const checkIn = await prisma.$transaction(async (tx) => {
+  }
+
+  async checkInReservation(reservationId: string) {
+    return prisma.$transaction(async (tx) => {
       await tx.reservation.update({
         where: { id: reservationId },
-        data: { status: "COMPLETED" },
+        data: { status: ReservationStatus.COMPLETED },
       });
 
       return tx.checkIn.create({
@@ -189,7 +176,16 @@ export const prismaParkingReservationRepository = {
         select: { checkedAt: true },
       });
     });
+  }
 
-    return checkIn;
-  },
-} satisfies ParkingReservationRepository;
+  async getUserReservations(userId: string) {
+    const [reservationCount, user] = await Promise.all([
+      prisma.reservation.count({
+        where: { userId, status: ReservationStatus.RESERVED },
+      }),
+      prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
+    ]);
+
+    return { reservationCount, role: user?.role ?? UserRole.EMPLOYEE };
+  }
+}
