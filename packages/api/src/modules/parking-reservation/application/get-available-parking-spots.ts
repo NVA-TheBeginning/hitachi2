@@ -6,11 +6,11 @@ export async function getAvailableParkingSpots(
   input?: { date?: string },
   now = new Date(),
 ) {
-  const date = input?.date ?? getCurrentReservationDateString(now);
+  const today = getCurrentReservationDateString(now);
+  const date = input?.date ?? today;
   const reservationDate = toReservationDate(date);
 
-  const isToday = date === getCurrentReservationDateString(now);
-  const freeUncheckedIn = isToday && now.getUTCHours() >= 11;
+  const freeUncheckedIn = date === today && now.getUTCHours() >= 11;
 
   const reservedSpotIds = await repository.findReservedSpotIdsForDate(reservationDate, freeUncheckedIn);
   const parkingSpots = await repository.findAvailableSpots(reservedSpotIds);
