@@ -1,7 +1,7 @@
 "use client";
 
 import { getCurrentReservationDateString } from "@api/helpers";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,17 @@ export function ParkingReservationCard() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedCarId, setSelectedCarId] = useState("");
   const accountQuery = useQuery(orpc.getMyAccount.queryOptions());
+  const queryClient = useQueryClient();
   const cars = accountQuery.data?.cars ?? [];
   const resolvedSelectedCarId = cars.some((car) => car.id === selectedCarId) ? selectedCarId : (cars[0]?.id ?? "");
   const selectedCar = cars.find((car) => car.id === resolvedSelectedCarId) ?? null;
 
   const reservationMutation = useMutation(
     orpc.reserveParkingSpot.mutationOptions({
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await queryClient.invalidateQueries({
+          queryKey: orpc.getMyReservations.queryOptions().queryKey,
+        });
         toast.success(`Place ${data.parkingSpot.name} reservee.`);
       },
       onError: (error) => {

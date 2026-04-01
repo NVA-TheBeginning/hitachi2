@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { MyReservationsCard } from "@/components/my-reservations-card";
 import { ParkingReservationCard } from "@/components/parking-reservation-card";
 import { getServerSession } from "@/lib/auth-session";
 
@@ -19,6 +20,7 @@ export default async function DashboardPage() {
         </section>
 
         <ParkingReservationCard />
+        <MyReservationsCard />
       </div>
     </div>
   );
