@@ -4,6 +4,7 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
+import { getNoShowRate } from "./application/get-no-show-rate";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
@@ -122,4 +123,21 @@ export const parkingReservationRouter = {
   getAllParkingSpots: protectedProcedure.handler(() => {
     return repository.findAllParkingSpots();
   }),
+
+  getNoShowRate: protectedProcedure
+    .input(
+      z
+        .object({
+          startDate: reservationDateSchema.optional(),
+          endDate: reservationDateSchema.optional(),
+        })
+        .optional(),
+    )
+    .handler(({ input, context }) => {
+      return getNoShowRate(repository, {
+        userId: context.session.user.id,
+        startDate: input?.startDate,
+        endDate: input?.endDate,
+      });
+    }),
 };

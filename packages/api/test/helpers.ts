@@ -16,6 +16,7 @@ export interface TestContext {
       user: Omit<User, "createdAt" | "updatedAt"> & {
         createdAt: Date;
         updatedAt: Date;
+        role: string | null;
       };
     };
     jobQueue: { send: (name: string, data: object) => Promise<string | null> };
@@ -44,6 +45,7 @@ export function createContext(user: TestUser): TestContext {
           emailVerified: user.emailVerified,
           name: user.name,
           image: null,
+          role: user.role ?? null,
         },
       },
       jobQueue: { send: async () => null },

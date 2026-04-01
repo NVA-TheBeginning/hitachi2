@@ -219,6 +219,43 @@ export class PrismaReservationRepository implements IReservationRepository {
     });
   }
 
+  async getNoShowStats(input: { userId?: string; startDate?: Date; endDate?: Date }) {
+    const { userId, startDate, endDate } = input;
+
+    const commonWhere = {
+      ...(userId ? { userId } : {}),
+      ...(startDate || endDate
+        ? {
+            date: {
+              ...(startDate ? { gte: startDate } : {}),
+              ...(endDate ? { lt: endDate } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [totalReservations, noShowCount] = await Promise.all([
+      prisma.reservation.count({
+        where: {
+          ...commonWhere,
+          status: { in: [ReservationStatus.NO_SHOW, ReservationStatus.COMPLETED] },
+        },
+      }),
+      prisma.reservation.count({
+        where: { ...commonWhere, status: ReservationStatus.NO_SHOW },
+      }),
+    ]);
+
+    const rate = totalReservations === 0 ? 0 : (noShowCount / totalReservations) * 100;
+
+    return {
+      totalReservations,
+      noShowCount,
+      completedCount: totalReservations - noShowCount,
+      rate,
+    };
+  }
+
   async getUserReservations(userId: string) {
     const [reservationCount, user] = await Promise.all([
       prisma.reservation.count({
