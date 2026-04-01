@@ -7,6 +7,7 @@ import { createContext } from "../helpers";
 
 const SUCCESS_DATE = "2099-06-01";
 const CONFLICT_DATE = "2099-06-02";
+const RACE_DATE = "2099-06-03";
 
 const TEST_USER = {
   id: "test-reserve-user",
@@ -75,7 +76,7 @@ describe("parking-reservation.reserveParkingSpot", () => {
       })),
     });
 
-    expect(call(appRouter.reserveParkingSpot, { date: CONFLICT_DATE }, employeeCtx)).rejects.toMatchObject({
+    await expect(call(appRouter.reserveParkingSpot, { date: CONFLICT_DATE }, employeeCtx)).rejects.toMatchObject({
       code: "CONFLICT",
     });
   });
@@ -106,6 +107,39 @@ describe("parking-reservation.reserveParkingSpot", () => {
 
     expect(call(appRouter.reserveParkingSpot, { date: "2099-07-07" }, employeeCtx)).rejects.toMatchObject({
       code: "FORBIDDEN",
+    });
+  });
+
+  test("should handle concurrent reservations — only one wins", async () => {
+    const spots = await prisma.parkingSpot.findMany({ where: { available: true }, select: { id: true } });
+    const actor = await prisma.car.findFirstOrThrow({ orderBy: { id: "asc" } });
+
+    // Leave exactly 1 spot open
+    await prisma.reservation.createMany({
+      data: spots.slice(0, -1).map((spot) => ({
+        userId: actor.userId,
+        carId: actor.id,
+        parkingSpotId: spot.id,
+        date: toReservationDate(RACE_DATE),
+        status: ReservationStatus.RESERVED,
+      })),
+    });
+
+    const results = await Promise.allSettled([
+      call(appRouter.reserveParkingSpot, { date: RACE_DATE }, employeeCtx),
+      call(appRouter.reserveParkingSpot, { date: RACE_DATE }, managerCtx),
+    ]);
+
+    const succeeded = results.filter((r) => r.status === "fulfilled");
+    const failed = results.filter((r) => r.status === "rejected");
+
+    expect(succeeded).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+    expect((failed[0] as PromiseRejectedResult).reason).toMatchObject({ code: "CONFLICT" });
+
+    // Cleanup pre-filled reservations (actor.userId not covered by afterEach)
+    await prisma.reservation.deleteMany({
+      where: { userId: actor.userId, date: toReservationDate(RACE_DATE) },
     });
   });
 
