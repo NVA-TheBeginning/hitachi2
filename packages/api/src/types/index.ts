@@ -1,5 +1,9 @@
 import type { ReservationStatus, UserRole } from "@hitachi2/db";
 
+export const QUEUE_NAMES = {
+  SEND_EMAIL: "send-email",
+} as const;
+
 export interface JobQueue {
   send<T extends object>(name: string, data: T): Promise<string | null>;
 }

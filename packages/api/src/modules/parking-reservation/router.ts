@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import { protectedProcedure, publicProcedure } from "../../index";
+import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
 import { getAvailableParkingSpots } from "./application/get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
@@ -33,10 +34,22 @@ export const parkingReservationRouter = {
     )
     .handler(async ({ input, context }) => {
       try {
-        return await reserveParkingSpot(repository, {
+        const result = await reserveParkingSpot(repository, {
           date: input.date,
           userId: context.session.user.id,
         });
+
+        context.jobQueue
+          .send(QUEUE_NAMES.SEND_EMAIL, {
+            to: context.session.user.email,
+            subject: "Reservation confirmed",
+            reservationId: result.reservationId,
+            date: input.date,
+            parkingSpotName: result.parkingSpot.name,
+          })
+          .catch((err) => console.error("Failed to queue reservation email", err));
+
+        return result;
       } catch (error) {
         if (error instanceof ReservationLimitExceededError) {
           throw new ORPCError("FORBIDDEN", {
