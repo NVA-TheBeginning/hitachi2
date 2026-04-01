@@ -56,7 +56,7 @@ export class PrismaReservationRepository implements IReservationRepository {
       where: {
         date: { gte: start, lt: end },
         status: ReservationStatus.RESERVED,
-        ...(excludedSpotIds.length > 0 ? { parkingSpotId: { notIn: excludedSpotIds } } : {}),
+        parkingSpotId: { notIn: excludedSpotIds },
       },
       data: { status: ReservationStatus.NO_SHOW },
     });
