@@ -10,8 +10,14 @@ export type ParkingSpotSummary = {
   charger: boolean;
 };
 
+export type ReservationActor = {
+  userId: string;
+  carId: string;
+  electric: boolean;
+};
+
 export interface IReservationRepository {
-  findReservationActor(userId: string): Promise<{ userId: string; carId: string } | null>;
+  findReservationActor(userId: string, carId?: string): Promise<ReservationActor | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
   findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
   findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
@@ -24,7 +30,7 @@ export interface IReservationRepository {
   }): Promise<{ id: string; parkingSpot: ParkingSpotSummary }>;
   findAndCreateReservation(
     date: Date,
-    actor: { userId: string; carId: string },
+    actor: ReservationActor,
   ): Promise<{
     id: string;
     parkingSpot: ParkingSpotSummary;

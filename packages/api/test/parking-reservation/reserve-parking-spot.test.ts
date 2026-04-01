@@ -41,6 +41,14 @@ const TEST_USER_CAR = {
   electric: false,
 };
 
+const TEST_USER_EV_CAR = {
+  id: "test-reserve-user-ev-car",
+  userId: TEST_USER.id,
+  name: "Employee EV car",
+  licensePlate: "RS-004-AA",
+  electric: true,
+};
+
 const TEST_MANAGER_CAR = {
   id: "test-manager-user-car",
   userId: TEST_MANAGER.id,
@@ -65,7 +73,7 @@ beforeAll(async () => {
     where: { id: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
   });
   await prisma.user.createMany({ data: [TEST_USER, TEST_MANAGER, TEST_FILLER] });
-  await prisma.car.createMany({ data: [TEST_USER_CAR, TEST_MANAGER_CAR, TEST_FILLER_CAR] });
+  await prisma.car.createMany({ data: [TEST_USER_CAR, TEST_USER_EV_CAR, TEST_MANAGER_CAR, TEST_FILLER_CAR] });
 });
 
 afterAll(async () => {
@@ -96,6 +104,78 @@ describe("parking-reservation.reserveParkingSpot", () => {
     expect(result.reservationId).toBeDefined();
     expect(result.parkingSpot.name).toBeDefined();
     expect(result.date).toBe(SUCCESS_DATE);
+  });
+
+  test("should reserve a non-electric spot for a non-electric car", async () => {
+    const result = await call(
+      appRouter.reserveParkingSpot,
+      { carId: TEST_USER_CAR.id, date: SUCCESS_DATE },
+      employeeCtx,
+    );
+
+    expect(result.parkingSpot.charger).toBe(false);
+  });
+
+  test("should reserve an electric spot for an electric car", async () => {
+    const result = await call(
+      appRouter.reserveParkingSpot,
+      { carId: TEST_USER_EV_CAR.id, date: SUCCESS_DATE },
+      employeeCtx,
+    );
+
+    expect(result.parkingSpot.charger).toBe(true);
+  });
+
+  test("should fallback to a non-electric spot when no electric spot is available for an electric car", async () => {
+    const chargingSpots = await prisma.parkingSpot.findMany({
+      where: { available: true, charger: true },
+      select: { id: true },
+    });
+
+    expect(chargingSpots.length).toBeGreaterThan(0);
+
+    await prisma.reservation.createMany({
+      data: chargingSpots.map((spot) => ({
+        userId: TEST_FILLER.id,
+        carId: TEST_FILLER_CAR.id,
+        parkingSpotId: spot.id,
+        date: toReservationDate(CONFLICT_DATE),
+        status: ReservationStatus.RESERVED,
+      })),
+    });
+
+    const result = await call(
+      appRouter.reserveParkingSpot,
+      { carId: TEST_USER_EV_CAR.id, date: CONFLICT_DATE },
+      employeeCtx,
+    );
+
+    expect(result.parkingSpot.charger).toBe(false);
+  });
+
+  test("should throw CONFLICT when only electric spots remain for a non-electric car", async () => {
+    const classicSpots = await prisma.parkingSpot.findMany({
+      where: { available: true, charger: false },
+      select: { id: true },
+    });
+
+    expect(classicSpots.length).toBeGreaterThan(0);
+
+    await prisma.reservation.createMany({
+      data: classicSpots.map((spot) => ({
+        userId: TEST_FILLER.id,
+        carId: TEST_FILLER_CAR.id,
+        parkingSpotId: spot.id,
+        date: toReservationDate(CONFLICT_DATE),
+        status: ReservationStatus.RESERVED,
+      })),
+    });
+
+    await expect(
+      call(appRouter.reserveParkingSpot, { carId: TEST_USER_CAR.id, date: CONFLICT_DATE }, employeeCtx),
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
   });
 
   test("should throw CONFLICT when no spot is available", async () => {
