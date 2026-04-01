@@ -2,8 +2,8 @@
 
 import { getCurrentReservationDateString } from "@api/helpers";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon, ZapIcon } from "lucide-react";
+import { useState } from "react";
 import Loader from "@/components/loader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,19 +47,12 @@ function getSpotClasses(status: "available" | "reserved" | "mine") {
       return "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
     case "available":
       return "border-sky-500 bg-sky-500/5 text-sky-700 dark:text-sky-300";
-    case "reserved":
     default:
       return "border-black bg-zinc-950/[0.03] text-zinc-950 dark:border-white dark:bg-white/5 dark:text-white";
   }
 }
 
-function ParkingSpotTile({
-  spot,
-  status,
-}: {
-  spot: ParkingSpot;
-  status: "available" | "reserved" | "mine";
-}) {
+function ParkingSpotTile({ spot, status }: { spot: ParkingSpot; status: "available" | "reserved" | "mine" }) {
   return (
     <div
       className={`relative flex aspect-[4/5] min-h-12 items-center justify-center rounded-lg border-2 px-1.5 py-2 shadow-sm ${getSpotClasses(status)}`}
@@ -158,7 +151,9 @@ export function ParkingMap() {
     return rows;
   }, {});
 
-  const orderedRows = ROW_ORDER.map((row) => [row, groupedSpots[row] ?? []] as const).filter(([, spots]) => spots.length > 0);
+  const orderedRows = ROW_ORDER.map((row) => [row, groupedSpots[row] ?? []] as const).filter(
+    ([, spots]) => spots.length > 0,
+  );
   const reservedCount = allSpots.length - availableSpotIds.size;
 
   return (
@@ -166,7 +161,9 @@ export function ParkingMap() {
       <Card>
         <CardHeader>
           <CardTitle>Parking</CardTitle>
-          <CardDescription>Visualise les places libres, reservees et ta reservation pour une date donnee.</CardDescription>
+          <CardDescription>
+            Visualise les places libres, reservees et ta reservation pour une date donnee.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
           <div className="max-w-xs space-y-2">
