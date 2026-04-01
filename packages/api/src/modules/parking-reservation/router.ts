@@ -5,6 +5,7 @@ import { protectedProcedure, publicProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
 import { getNoShowRate } from "./application/get-no-show-rate";
+import { getSlotOccupancy } from "./application/get-slot-occupancy";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
@@ -123,6 +124,18 @@ export const parkingReservationRouter = {
   getAllParkingSpots: protectedProcedure.handler(() => {
     return repository.findAllParkingSpots();
   }),
+
+  getSlotOccupancy: protectedProcedure
+    .input(
+      z
+        .object({
+          date: reservationDateSchema.optional(),
+        })
+        .optional(),
+    )
+    .handler(({ input }) => {
+      return getSlotOccupancy(repository, { date: input?.date });
+    }),
 
   getNoShowRate: protectedProcedure
     .input(

@@ -55,6 +55,14 @@ export interface IReservationRepository {
     startDate?: Date;
     endDate?: Date;
   }): Promise<{ totalReservations: number; noShowCount: number; completedCount: number; rate: number }>;
+  getSlotOccupancyStats(date: Date): Promise<{
+    totalSlots: number;
+    occupiedSlots: number;
+    occupancyRate: number;
+    totalElectricSlots: number;
+    occupiedElectricSlots: number;
+    electricOccupancyRate: number;
+  }>;
 }
 
 export type UserCarSummary = {
