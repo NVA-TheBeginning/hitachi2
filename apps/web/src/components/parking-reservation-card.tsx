@@ -16,15 +16,21 @@ export function ParkingReservationCard() {
   const accountQuery = useQuery(orpc.getMyAccount.queryOptions());
   const queryClient = useQueryClient();
   const cars = accountQuery.data?.cars ?? [];
+  const reservationQuota = accountQuery.data?.reservationQuota;
   const resolvedSelectedCarId = cars.some((car) => car.id === selectedCarId) ? selectedCarId : (cars[0]?.id ?? "");
   const selectedCar = cars.find((car) => car.id === resolvedSelectedCarId) ?? null;
 
   const reservationMutation = useMutation(
     orpc.reserveParkingSpot.mutationOptions({
       onSuccess: async (data) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpc.getMyReservations.queryOptions().queryKey,
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyReservations.queryOptions().queryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyAccount.queryOptions().queryKey,
+          }),
+        ]);
         toast.success(`Place ${data.parkingSpot.name} reservee.`);
       },
       onError: (error) => {
@@ -39,6 +45,13 @@ export function ParkingReservationCard() {
         <div className="space-y-1">
           <h2 className="font-medium">Reservation de parking</h2>
         </div>
+
+        {reservationQuota ? (
+          <p className="text-muted-foreground text-sm">
+            Reservations restantes: <strong>{reservationQuota.remainingReservations}</strong> /{" "}
+            {reservationQuota.maxReservations}
+          </p>
+        ) : null}
 
         <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
           <div className="space-y-2">
@@ -72,7 +85,11 @@ export function ParkingReservationCard() {
 
           <Button
             disabled={
-              !selectedDate || !resolvedSelectedCarId || reservationMutation.isPending || accountQuery.isLoading
+              !selectedDate ||
+              !resolvedSelectedCarId ||
+              reservationMutation.isPending ||
+              accountQuery.isLoading ||
+              reservationQuota?.remainingReservations === 0
             }
             onClick={() =>
               reservationMutation.mutate({

@@ -96,8 +96,38 @@ describe("account router", () => {
 
     expect(result.id).toBe(TEST_USER.id);
     expect(result.email).toBe(TEST_USER.email);
+    expect(result.reservationQuota).toEqual({
+      reservationCount: 0,
+      maxReservations: 5,
+      remainingReservations: 5,
+    });
     expect(result.cars).toHaveLength(1);
     expect(result.cars[0]?.licensePlate).toBe("AC-001-AA");
+  });
+
+  test("should return reservation quota based on active reservations", async () => {
+    const parkingSpot = await prisma.parkingSpot.findFirstOrThrow({
+      where: { available: true },
+      select: { id: true },
+    });
+
+    await prisma.reservation.create({
+      data: {
+        userId: TEST_USER.id,
+        carId: EXISTING_CAR.id,
+        parkingSpotId: parkingSpot.id,
+        date: toReservationDate("2099-08-01"),
+        status: ReservationStatus.RESERVED,
+      },
+    });
+
+    const result = await call(appRouter.getMyAccount, undefined, accountCtx);
+
+    expect(result.reservationQuota).toEqual({
+      reservationCount: 1,
+      maxReservations: 5,
+      remainingReservations: 4,
+    });
   });
 
   test("should create a new car for the authenticated user", async () => {
