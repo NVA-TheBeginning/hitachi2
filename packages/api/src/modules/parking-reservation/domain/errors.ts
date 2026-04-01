@@ -12,6 +12,13 @@ export class NoCarLinkedToUserError extends Error {
   }
 }
 
+export class ReservationCarNotFoundError extends Error {
+  constructor(carId: string) {
+    super(`La voiture ${carId} est introuvable ou n'est pas liee a votre compte.`);
+    this.name = "ReservationCarNotFoundError";
+  }
+}
+
 export class NoParkingSpotAvailableError extends Error {
   constructor(date: string) {
     super(`Aucune place libre n'est disponible pour le ${date}.`);

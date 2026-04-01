@@ -12,6 +12,7 @@ import {
   NoReservationForSpotTodayError,
   ParkingSpotNotFoundError,
   ReservationAlreadyCheckedInError,
+  ReservationCarNotFoundError,
   ReservationLimitExceededError,
   SeedDataMissingError,
 } from "./domain/errors";
@@ -29,12 +30,14 @@ export const parkingReservationRouter = {
   reserveParkingSpot: protectedProcedure
     .input(
       z.object({
+        carId: z.string().optional(),
         date: reservationDateSchema,
       }),
     )
     .handler(async ({ input, context }) => {
       try {
         const result = await reserveParkingSpot(repository, {
+          carId: input.carId,
           date: input.date,
           userId: context.session.user.id,
         });
@@ -71,6 +74,12 @@ export const parkingReservationRouter = {
 
         if (error instanceof SeedDataMissingError) {
           throw new ORPCError("PRECONDITION_FAILED", {
+            message: error.message,
+          });
+        }
+
+        if (error instanceof ReservationCarNotFoundError) {
+          throw new ORPCError("NOT_FOUND", {
             message: error.message,
           });
         }
