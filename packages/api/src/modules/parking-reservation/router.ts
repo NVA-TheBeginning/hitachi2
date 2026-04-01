@@ -4,7 +4,7 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
-import { getAvailableParkingSpots } from "./application/get-available-parking-spots";
+import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
   NoCarLinkedToUserError,
@@ -97,7 +97,7 @@ export const parkingReservationRouter = {
         .optional(),
     )
     .handler(({ input }) => {
-      return getAvailableParkingSpots(repository, input);
+      return releaseAndGetAvailableParkingSpots(repository, input);
     }),
 
   checkInBySpot: protectedProcedure.input(z.object({ spotId: z.string() })).handler(async ({ input, context }) => {

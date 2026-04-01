@@ -23,6 +23,7 @@ export type ReservationActor = {
 export interface IReservationRepository {
   findReservationActor(userId: string, carId?: string): Promise<ReservationActor | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
+  releaseUncheckedReservations(date: Date): Promise<void>;
   findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
   findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
   countAvailableParkingSpots(): Promise<number>;
