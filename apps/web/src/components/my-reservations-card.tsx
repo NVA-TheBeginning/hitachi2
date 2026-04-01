@@ -24,9 +24,14 @@ export function MyReservationsCard() {
   const deleteReservationMutation = useMutation(
     orpc.deleteMyReservation.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpc.getMyReservations.queryOptions().queryKey,
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyReservations.queryOptions().queryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyAccount.queryOptions().queryKey,
+          }),
+        ]);
         toast.success("Reservation supprimee.");
       },
       onError: (error) => {
