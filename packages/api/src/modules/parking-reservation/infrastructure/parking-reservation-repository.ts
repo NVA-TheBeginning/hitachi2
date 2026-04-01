@@ -146,10 +146,29 @@ export class PrismaReservationRepository implements IReservationRepository {
     }
   }
 
-  async findReservationById(id: string) {
-    return prisma.reservation.findUnique({
-      where: { id },
-      select: { id: true, userId: true, status: true },
+  async findParkingSpotById(spotId: string) {
+    return prisma.parkingSpot.findUnique({
+      where: { id: spotId },
+      select: parkingSpotSummarySelect,
+    });
+  }
+
+  async findTodayReservationForUserAndSpot(userId: string, spotId: string, today: Date) {
+    const { start, end } = getReservationDayRange(today);
+    return prisma.reservation.findFirst({
+      where: {
+        userId,
+        parkingSpotId: spotId,
+        date: { gte: start, lt: end },
+      },
+      select: { id: true, status: true },
+    });
+  }
+
+  async findAllParkingSpots() {
+    return prisma.parkingSpot.findMany({
+      orderBy: { name: "asc" },
+      select: parkingSpotSummarySelect,
     });
   }
 

@@ -8,15 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
-
-type Role = "EMPLOYEE" | "MANAGER" | "SECRETARY";
+import type { UserRole } from "@/lib/enum";
 
 interface TestUser {
   name: string;
   email: string;
 }
 
-const TEST_USERS: Record<Role, TestUser[]> = {
+const TEST_USERS: Record<UserRole, TestUser[]> = {
   EMPLOYEE: [
     { name: "Ken", email: "ken@test.com" },
     { name: "Ron", email: "ron@test.com" },
@@ -34,7 +33,7 @@ const TEST_USERS: Record<Role, TestUser[]> = {
   ],
 };
 
-const ROLE_META: Record<Role, { label: string; description: string; icon: React.ReactNode }> = {
+const ROLE_META: Record<UserRole, { label: string; description: string; icon: React.ReactNode }> = {
   EMPLOYEE: {
     label: "Employee",
     description: "Make parking reservations",
@@ -54,7 +53,7 @@ const ROLE_META: Record<Role, { label: string; description: string; icon: React.
 
 export default function RoleLogin({ onManualLogin }: { onManualLogin: () => void }) {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loggingInEmail, setLoggingInEmail] = useState<string | null>(null);
 
   async function handleQuickLogin(email: string) {
@@ -84,7 +83,7 @@ export default function RoleLogin({ onManualLogin }: { onManualLogin: () => void
       {selectedRole === null ? (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {(Object.keys(ROLE_META) as Role[]).map((role) => {
+            {(Object.keys(ROLE_META) as UserRole[]).map((role) => {
               const meta = ROLE_META[role];
               return (
                 <Card
