@@ -2,10 +2,8 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import { protectedProcedure, publicProcedure } from "../../index";
-import { checkInReservation } from "./application/check-in-reservation";
-import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { checkInBySpot } from "./application/check-in-by-spot";
-import { getAvailableParkingSpots } from "./application/get-available-parking-spots";
+import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
   NoCarLinkedToUserError,

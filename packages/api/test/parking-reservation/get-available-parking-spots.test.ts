@@ -156,12 +156,19 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     const reservation = await createReservation(RESERVED_SPOT.id, today);
 
     const after11am = new Date(`${today}T11:30:00.000Z`);
-    const result = await releaseAndGetAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, after11am);
+    const result = await releaseAndGetAvailableParkingSpots(
+      new PrismaReservationRepository(),
+      { date: today },
+      after11am,
+    );
 
     const spotNames = result.parkingSpots.map((s) => s.name);
     expect(spotNames).toContain(RESERVED_SPOT.name);
 
-    const updated = await prisma.reservation.findUniqueOrThrow({ where: { id: reservation.id }, select: { status: true } });
+    const updated = await prisma.reservation.findUniqueOrThrow({
+      where: { id: reservation.id },
+      select: { status: true },
+    });
     expect(updated.status).toBe(ReservationStatus.NO_SHOW);
   });
 
@@ -183,7 +190,10 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     const spotNames = result.parkingSpots.map((s) => s.name);
     expect(spotNames).not.toContain(RESERVED_SPOT.name); // spot should still be taken
 
-    const updated = await prisma.reservation.findUniqueOrThrow({ where: { id: newReservation.id }, select: { status: true } });
+    const updated = await prisma.reservation.findUniqueOrThrow({
+      where: { id: newReservation.id },
+      select: { status: true },
+    });
     expect(updated.status).toBe(ReservationStatus.RESERVED); // new reservation must NOT be NO_SHOW
   });
 
@@ -192,7 +202,11 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     await createReservation(RESERVED_SPOT.id, today);
 
     const before11am = new Date(`${today}T10:30:00.000Z`);
-    const result = await releaseAndGetAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, before11am);
+    const result = await releaseAndGetAvailableParkingSpots(
+      new PrismaReservationRepository(),
+      { date: today },
+      before11am,
+    );
 
     const spotNames = result.parkingSpots.map((s) => s.name);
     expect(spotNames).not.toContain(RESERVED_SPOT.name);
