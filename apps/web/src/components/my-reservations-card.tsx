@@ -20,7 +20,6 @@ function formatReservationDate(date: string | Date) {
 export function MyReservationsCard() {
   const queryClient = useQueryClient();
   const reservationsQuery = useQuery(orpc.getMyReservations.queryOptions());
-  const reservations = reservationsQuery.data ?? [];
 
   const deleteReservationMutation = useMutation(
     orpc.deleteMyReservation.mutationOptions({
@@ -71,10 +70,10 @@ export function MyReservationsCard() {
         <CardDescription>Consulte et supprime tes reservations actives.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {reservations.length === 0 ? (
+        {reservationsQuery.data.length === 0 ? (
           <p className="text-muted-foreground text-sm">Aucune reservation active pour le moment.</p>
         ) : (
-          reservations.map((reservation) => (
+          reservationsQuery.data.map((reservation) => (
             <div
               key={reservation.id}
               className="flex flex-col gap-3 border p-3 md:flex-row md:items-center md:justify-between"
