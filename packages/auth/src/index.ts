@@ -1,4 +1,4 @@
-import prisma from "@hitachi2/db";
+import prisma, { UserRole } from "@hitachi2/db";
 import { env } from "@hitachi2/env/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -17,6 +17,16 @@ export const auth = betterAuth({
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
+    },
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: UserRole.EMPLOYEE,
+        input: false,
+      },
     },
   },
   plugins: [],

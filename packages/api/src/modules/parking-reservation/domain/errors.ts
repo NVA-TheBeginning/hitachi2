@@ -46,3 +46,17 @@ export class ReservationLimitExceededError extends Error {
     this.name = "ReservationLimitExceededError";
   }
 }
+
+export class ParkingSpotNotFoundError extends Error {
+  constructor(spotId: string) {
+    super(`La place de parking ${spotId} est introuvable.`);
+    this.name = "ParkingSpotNotFoundError";
+  }
+}
+
+export class NoReservationForSpotTodayError extends Error {
+  constructor(spotId: string) {
+    super(`Aucune reservation active pour la place ${spotId} aujourd'hui.`);
+    this.name = "NoReservationForSpotTodayError";
+  }
+}
