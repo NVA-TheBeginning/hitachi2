@@ -1,6 +1,7 @@
 import prisma from "@hitachi2/db";
 import type { RouterClient } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { accountRouter } from "../modules/account/router";
 import { parkingReservationRouter } from "../modules/parking-reservation/router";
 
 export const appRouter = {
@@ -15,6 +16,7 @@ export const appRouter = {
       checkedAt: new Date().toISOString(),
     };
   }),
+  ...accountRouter,
   ...parkingReservationRouter,
   privateData: protectedProcedure.handler(({ context }) => {
     return {

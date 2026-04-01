@@ -6,6 +6,7 @@ import { checkInReservation } from "./application/check-in-reservation";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
+  NoCarLinkedToUserError,
   NoParkingSpotAvailableError,
   ReservationAlreadyCheckedInError,
   ReservationForbiddenError,
@@ -45,6 +46,12 @@ export const parkingReservationRouter = {
 
         if (error instanceof NoParkingSpotAvailableError) {
           throw new ORPCError("CONFLICT", {
+            message: error.message,
+          });
+        }
+
+        if (error instanceof NoCarLinkedToUserError) {
+          throw new ORPCError("PRECONDITION_FAILED", {
             message: error.message,
           });
         }

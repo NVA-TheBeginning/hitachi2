@@ -16,8 +16,9 @@ function getReservationDayRange(date: Date) {
 }
 
 export class PrismaReservationRepository implements IReservationRepository {
-  async findReservationActor() {
+  async findReservationActor(userId: string) {
     const car = await prisma.car.findFirst({
+      where: { userId },
       orderBy: { id: "asc" },
       select: { id: true, userId: true },
     });

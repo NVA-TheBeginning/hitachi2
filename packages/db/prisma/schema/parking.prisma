@@ -9,7 +9,11 @@ model Car {
   id           String        @id @default(cuid())
   userId       String
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String        @default("Vehicule")
+  licensePlate String?       @unique
   electric     Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   reservations Reservation[]
 
   @@index([userId])

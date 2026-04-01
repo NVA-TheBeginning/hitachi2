@@ -11,7 +11,7 @@ export type ParkingSpotSummary = {
 };
 
 export interface IReservationRepository {
-  findReservationActor(): Promise<{ userId: string; carId: string } | null>;
+  findReservationActor(userId: string): Promise<{ userId: string; carId: string } | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
   releaseUncheckedReservations(date: Date): Promise<void>;
   findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
@@ -34,4 +34,37 @@ export interface IReservationRepository {
   findReservationById(id: string): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
   checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
   getUserReservations(userId: string): Promise<{ reservationCount: number; role: UserRole }>;
+}
+
+export type UserCarSummary = {
+  id: string;
+  name: string;
+  licensePlate: string | null;
+  electric: boolean;
+  reservationCount: number;
+};
+
+export interface IAccountRepository {
+  getMyAccount(userId: string): Promise<{
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    createdAt: Date;
+    cars: UserCarSummary[];
+  } | null>;
+  findUserCarById(userId: string, carId: string): Promise<UserCarSummary | null>;
+  createUserCar(input: {
+    userId: string;
+    name: string;
+    licensePlate: string;
+    electric: boolean;
+  }): Promise<UserCarSummary>;
+  updateUserCar(input: {
+    carId: string;
+    name: string;
+    licensePlate: string;
+    electric: boolean;
+  }): Promise<UserCarSummary>;
+  deleteUserCar(carId: string): Promise<void>;
 }

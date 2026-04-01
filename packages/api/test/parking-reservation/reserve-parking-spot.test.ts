@@ -25,25 +25,64 @@ const TEST_MANAGER = {
   role: UserRole.MANAGER,
 };
 
+const TEST_FILLER = {
+  id: "test-filler-user",
+  name: "Test Filler",
+  email: "test-filler@test.com",
+  emailVerified: true as const,
+  role: UserRole.MANAGER,
+};
+
+const TEST_USER_CAR = {
+  id: "test-reserve-user-car",
+  userId: TEST_USER.id,
+  name: "Employee car",
+  licensePlate: "RS-001-AA",
+  electric: false,
+};
+
+const TEST_MANAGER_CAR = {
+  id: "test-manager-user-car",
+  userId: TEST_MANAGER.id,
+  name: "Manager car",
+  licensePlate: "RS-002-AA",
+  electric: true,
+};
+
+const TEST_FILLER_CAR = {
+  id: "test-filler-user-car",
+  userId: TEST_FILLER.id,
+  name: "Filler car",
+  licensePlate: "RS-003-AA",
+  electric: false,
+};
+
 beforeAll(async () => {
-  await prisma.user.deleteMany({
-    where: { id: { in: [TEST_USER.id, TEST_MANAGER.id] } },
+  await prisma.car.deleteMany({
+    where: { userId: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
   });
-  await prisma.user.createMany({ data: [TEST_USER, TEST_MANAGER] });
+  await prisma.user.deleteMany({
+    where: { id: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
+  });
+  await prisma.user.createMany({ data: [TEST_USER, TEST_MANAGER, TEST_FILLER] });
+  await prisma.car.createMany({ data: [TEST_USER_CAR, TEST_MANAGER_CAR, TEST_FILLER_CAR] });
 });
 
 afterAll(async () => {
   await prisma.reservation.deleteMany({
-    where: { userId: { in: [TEST_USER.id, TEST_MANAGER.id] } },
+    where: { userId: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
+  });
+  await prisma.car.deleteMany({
+    where: { userId: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
   });
   await prisma.user.deleteMany({
-    where: { id: { in: [TEST_USER.id, TEST_MANAGER.id] } },
+    where: { id: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
   });
 });
 
 afterEach(async () => {
   await prisma.reservation.deleteMany({
-    where: { userId: TEST_USER.id },
+    where: { userId: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
   });
 });
 
@@ -64,12 +103,11 @@ describe("parking-reservation.reserveParkingSpot", () => {
       where: { available: true },
       select: { id: true },
     });
-    const actor = await prisma.car.findFirstOrThrow({ orderBy: { id: "asc" } });
 
     await prisma.reservation.createMany({
       data: spots.map((spot) => ({
-        userId: actor.userId,
-        carId: actor.id,
+        userId: TEST_MANAGER.id,
+        carId: TEST_MANAGER_CAR.id,
         parkingSpotId: spot.id,
         date: toReservationDate(CONFLICT_DATE),
         status: ReservationStatus.RESERVED,
@@ -93,12 +131,11 @@ describe("parking-reservation.reserveParkingSpot", () => {
       take: 6,
       select: { id: true },
     });
-    const actor = await prisma.car.findFirstOrThrow({ orderBy: { id: "asc" } });
 
     await prisma.reservation.createMany({
       data: spots.map((spot) => ({
         userId: TEST_USER.id,
-        carId: actor.id,
+        carId: TEST_USER_CAR.id,
         parkingSpotId: spot.id,
         date: toReservationDate("2099-07-01"),
         status: ReservationStatus.RESERVED,
@@ -112,13 +149,12 @@ describe("parking-reservation.reserveParkingSpot", () => {
 
   test("should handle concurrent reservations — only one wins", async () => {
     const spots = await prisma.parkingSpot.findMany({ where: { available: true }, select: { id: true } });
-    const actor = await prisma.car.findFirstOrThrow({ orderBy: { id: "asc" } });
 
     // Leave exactly 1 spot open
     await prisma.reservation.createMany({
       data: spots.slice(0, -1).map((spot) => ({
-        userId: actor.userId,
-        carId: actor.id,
+        userId: TEST_FILLER.id,
+        carId: TEST_FILLER_CAR.id,
         parkingSpotId: spot.id,
         date: toReservationDate(RACE_DATE),
         status: ReservationStatus.RESERVED,
@@ -139,7 +175,7 @@ describe("parking-reservation.reserveParkingSpot", () => {
 
     // Cleanup pre-filled reservations (actor.userId not covered by afterEach)
     await prisma.reservation.deleteMany({
-      where: { userId: actor.userId, date: toReservationDate(RACE_DATE) },
+      where: { userId: TEST_FILLER.id, date: toReservationDate(RACE_DATE) },
     });
   });
 
