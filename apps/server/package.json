@@ -21,6 +21,7 @@
     "dotenv": "catalog:",
     "fastify": "^5.8.4",
     "pg-boss": "^12.15.0",
+    "usesend-js": "^1.6.3",
     "zod": "catalog:"
   },
   "devDependencies": {
