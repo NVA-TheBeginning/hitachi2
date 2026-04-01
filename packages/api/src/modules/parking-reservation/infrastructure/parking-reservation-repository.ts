@@ -1,4 +1,4 @@
-import type { IReservationRepository } from "@api/types";
+import type { ParkingReservationRepository } from "@api/types";
 import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
@@ -15,13 +15,9 @@ function getReservationDayRange(date: Date) {
   return { start, end };
 }
 
-export class PrismaReservationRepository implements IReservationRepository {
-  async findReservationActor() {
-export const prismaParkingReservationRepository = {
-  async findReservationActor(userId) {
+export class PrismaReservationRepository implements ParkingReservationRepository {
+  async findReservationActor(userId: string) {
     const car = await prisma.car.findFirst({
-      orderBy: { id: "asc" },
-      select: { id: true, userId: true },
       where: {
         userId,
       },
@@ -34,7 +30,9 @@ export const prismaParkingReservationRepository = {
       },
     });
 
-    if (!car) return null;
+    if (!car) {
+      return null;
+    }
 
     return { userId: car.userId, carId: car.id };
   }
@@ -50,7 +48,7 @@ export const prismaParkingReservationRepository = {
       select: { parkingSpotId: true },
     });
 
-    return reservations.map((r) => r.parkingSpotId);
+    return reservations.map((reservation) => reservation.parkingSpotId);
   }
 
   async findFirstAvailableSpot(excludedSpotIds: string[]) {
@@ -113,7 +111,7 @@ export const prismaParkingReservationRepository = {
             select: { parkingSpotId: true },
           });
 
-          const reservedSpotIds = reservations.map((r) => r.parkingSpotId);
+          const reservedSpotIds = reservations.map((reservation) => reservation.parkingSpotId);
 
           const spot = await tx.parkingSpot.findFirst({
             where: {
@@ -124,7 +122,9 @@ export const prismaParkingReservationRepository = {
             select: parkingSpotSummarySelect,
           });
 
-          if (!spot) return null;
+          if (!spot) {
+            return null;
+          }
 
           const [reservation, remainingSpots] = await Promise.all([
             tx.reservation.create({

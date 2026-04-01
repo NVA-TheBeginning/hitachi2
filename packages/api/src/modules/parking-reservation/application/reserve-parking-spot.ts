@@ -1,30 +1,22 @@
 import { toReservationDate } from "@api/helpers";
 import type { ParkingReservationRepository } from "@api/types";
+import { UserRole } from "@hitachi2/db";
+
 import {
   NoParkingSpotAvailableError,
+  ReservationLimitExceededError,
   SeedDataMissingError,
   UserCarMissingError,
 } from "../domain/errors";
-import type { IReservationRepository } from "@api/types";
-import { UserRole } from "@hitachi2/db";
-import { NoParkingSpotAvailableError, ReservationLimitExceededError, SeedDataMissingError } from "../domain/errors";
 
 export async function reserveParkingSpot(
   repository: ParkingReservationRepository,
   input: { date: string; userId: string },
 ) {
-export async function reserveParkingSpot(repository: IReservationRepository, input: { date: string; userId: string }) {
   const reservationDate = toReservationDate(input.date);
 
-  const [reservationActor, availableSpotCount, reservedSpotIds] =
-    await Promise.all([
-      repository.findReservationActor(input.userId),
-      repository.countAvailableParkingSpots(),
-      repository.findReservedSpotIdsForDate(reservationDate),
-    ]);
-
   const [reservationActor, availableSpotCount, userInfo] = await Promise.all([
-    repository.findReservationActor(),
+    repository.findReservationActor(input.userId),
     repository.countAvailableParkingSpots(),
     repository.getUserReservations(input.userId),
   ]);

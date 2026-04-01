@@ -1,24 +1,16 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import Loader from "@/components/loader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { queryClient, orpc } from "@/utils/orpc";
-
-import { Button } from "@/components/ui/button";
+import { orpc, queryClient } from "@/utils/orpc";
 
 type AccountCar = {
   id: string;
@@ -26,6 +18,63 @@ type AccountCar = {
   licensePlate: string;
   electric: boolean;
 };
+
+type Account = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  cars: AccountCar[];
+};
+
+function AccountProfileEditor({
+  account,
+  isSaving,
+  onSave,
+}: {
+  account: Account;
+  isSaving: boolean;
+  onSave: (input: { name: string }) => void;
+}) {
+  const [profileName, setProfileName] = useState(account.name);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Mon compte</CardTitle>
+        <CardDescription>Modifiez votre nom et consultez les informations de votre session.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 md:grid-cols-3">
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="account-name">Nom</Label>
+          <Input id="account-name" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="account-role">Role</Label>
+          <Input id="account-role" value={account.role} readOnly />
+        </div>
+
+        <div className="space-y-2 md:col-span-3">
+          <Label htmlFor="account-email">Email</Label>
+          <Input id="account-email" value={account.email} readOnly />
+        </div>
+      </CardContent>
+      <CardFooter className="justify-end">
+        <Button
+          onClick={() =>
+            onSave({
+              name: profileName,
+            })
+          }
+          disabled={isSaving || profileName.trim().length < 2 || profileName === account.name}
+        >
+          {isSaving ? "Enregistrement..." : "Mettre a jour"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
 
 function CarEditor({
   car,
@@ -35,12 +84,7 @@ function CarEditor({
   isDeleting,
 }: {
   car: AccountCar;
-  onSave: (input: {
-    carId: string;
-    name: string;
-    licensePlate: string;
-    electric: boolean;
-  }) => void;
+  onSave: (input: { carId: string; name: string; licensePlate: string; electric: boolean }) => void;
   onDelete: (carId: string) => void;
   isSaving: boolean;
   isDeleting: boolean;
@@ -49,28 +93,16 @@ function CarEditor({
   const [licensePlate, setLicensePlate] = useState(car.licensePlate);
   const [electric, setElectric] = useState(car.electric);
 
-  useEffect(() => {
-    setName(car.name);
-    setLicensePlate(car.licensePlate);
-    setElectric(car.electric);
-  }, [car]);
-
   return (
     <Card size="sm">
       <CardHeader>
         <CardTitle>{car.name}</CardTitle>
-        <CardDescription>
-          Modifiez les informations de cette voiture.
-        </CardDescription>
+        <CardDescription>Modifiez les informations de cette voiture.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor={`car-name-${car.id}`}>Nom</Label>
-          <Input
-            id={`car-name-${car.id}`}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
+          <Input id={`car-name-${car.id}`} value={name} onChange={(event) => setName(event.target.value)} />
         </div>
 
         <div className="space-y-2">
@@ -84,6 +116,7 @@ function CarEditor({
 
         <div className="flex items-center gap-2 md:col-span-2">
           <Checkbox
+            id={`car-electric-${car.id}`}
             checked={electric}
             onCheckedChange={(checked) => setElectric(checked === true)}
           />
@@ -91,11 +124,7 @@ function CarEditor({
         </div>
       </CardContent>
       <CardFooter className="flex justify-between gap-2">
-        <Button
-          variant="destructive"
-          onClick={() => onDelete(car.id)}
-          disabled={isDeleting || isSaving}
-        >
+        <Button variant="destructive" onClick={() => onDelete(car.id)} disabled={isDeleting || isSaving}>
           {isDeleting ? "Suppression..." : "Supprimer"}
         </Button>
 
@@ -108,12 +137,7 @@ function CarEditor({
               electric,
             })
           }
-          disabled={
-            isSaving ||
-            isDeleting ||
-            name.trim().length < 2 ||
-            licensePlate.trim().length < 2
-          }
+          disabled={isSaving || isDeleting || name.trim().length < 2 || licensePlate.trim().length < 2}
         >
           {isSaving ? "Enregistrement..." : "Enregistrer"}
         </Button>
@@ -124,14 +148,9 @@ function CarEditor({
 
 export default function AccountContent() {
   const accountQuery = useQuery(orpc.getMyAccount.queryOptions());
-  const [profileName, setProfileName] = useState("");
   const [newCarName, setNewCarName] = useState("");
   const [newCarLicensePlate, setNewCarLicensePlate] = useState("");
   const [newCarElectric, setNewCarElectric] = useState(false);
-
-  useEffect(() => {
-    setProfileName(accountQuery.data?.name ?? "");
-  }, [accountQuery.data?.name]);
 
   const refreshAccount = async () => {
     await queryClient.invalidateQueries();
@@ -200,64 +219,21 @@ export default function AccountContent() {
     );
   }
 
-  const account = accountQuery.data;
+  const account = accountQuery.data as Account;
 
   return (
     <div className="grid gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Mon compte</CardTitle>
-          <CardDescription>
-            Modifiez votre nom et consultez les informations de votre session.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="account-name">Nom</Label>
-            <Input
-              id="account-name"
-              value={profileName}
-              onChange={(event) => setProfileName(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="account-role">Role</Label>
-            <Input id="account-role" value={account.role} readOnly />
-          </div>
-
-          <div className="space-y-2 md:col-span-3">
-            <Label htmlFor="account-email">Email</Label>
-            <Input id="account-email" value={account.email} readOnly />
-          </div>
-        </CardContent>
-        <CardFooter className="justify-end">
-          <Button
-            onClick={() =>
-              updateAccountMutation.mutate({
-                name: profileName,
-              })
-            }
-            disabled={
-              updateAccountMutation.isPending ||
-              profileName.trim().length < 2 ||
-              profileName === account.name
-            }
-          >
-            {updateAccountMutation.isPending
-              ? "Enregistrement..."
-              : "Mettre a jour"}
-          </Button>
-        </CardFooter>
-      </Card>
+      <AccountProfileEditor
+        key={`${account.id}:${account.name}`}
+        account={account}
+        isSaving={updateAccountMutation.isPending}
+        onSave={(input) => updateAccountMutation.mutate(input)}
+      />
 
       <Card>
         <CardHeader>
           <CardTitle>Mes voitures</CardTitle>
-          <CardDescription>
-            Ajoutez, modifiez ou supprimez les voitures rattachees a votre
-            compte.
-          </CardDescription>
+          <CardDescription>Ajoutez, modifiez ou supprimez les voitures rattachees a votre compte.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-4 rounded-none border p-4 md:grid-cols-2">
@@ -283,6 +259,7 @@ export default function AccountContent() {
 
             <div className="flex items-center gap-2 md:col-span-2">
               <Checkbox
+                id="new-car-electric"
                 checked={newCarElectric}
                 onCheckedChange={(checked) => setNewCarElectric(checked === true)}
               />
@@ -299,9 +276,7 @@ export default function AccountContent() {
                   })
                 }
                 disabled={
-                  createCarMutation.isPending ||
-                  newCarName.trim().length < 2 ||
-                  newCarLicensePlate.trim().length < 2
+                  createCarMutation.isPending || newCarName.trim().length < 2 || newCarLicensePlate.trim().length < 2
                 }
               >
                 {createCarMutation.isPending ? "Ajout..." : "Ajouter la voiture"}
@@ -313,25 +288,17 @@ export default function AccountContent() {
             <div className="grid gap-4 md:grid-cols-2">
               {account.cars.map((car) => (
                 <CarEditor
-                  key={car.id}
+                  key={`${car.id}:${car.name}:${car.licensePlate}:${car.electric}`}
                   car={car}
                   onSave={(input) => updateCarMutation.mutate(input)}
                   onDelete={(carId) => deleteCarMutation.mutate({ carId })}
-                  isSaving={
-                    updateCarMutation.isPending &&
-                    updateCarMutation.variables?.carId === car.id
-                  }
-                  isDeleting={
-                    deleteCarMutation.isPending &&
-                    deleteCarMutation.variables?.carId === car.id
-                  }
+                  isSaving={updateCarMutation.isPending && updateCarMutation.variables?.carId === car.id}
+                  isDeleting={deleteCarMutation.isPending && deleteCarMutation.variables?.carId === car.id}
                 />
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Aucune voiture enregistree pour le moment.
-            </p>
+            <p className="text-sm text-muted-foreground">Aucune voiture enregistree pour le moment.</p>
           )}
         </CardContent>
       </Card>

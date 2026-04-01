@@ -1,4 +1,4 @@
-import type { IReservationRepository } from "@api/types";
+import type { ParkingReservationRepository } from "@api/types";
 import { ReservationStatus } from "@hitachi2/db";
 import {
   ReservationAlreadyCheckedInError,
@@ -7,7 +7,7 @@ import {
 } from "../domain/errors";
 
 export async function checkInReservation(
-  repository: IReservationRepository,
+  repository: ParkingReservationRepository,
   input: { reservationId: string; userId: string },
 ) {
   const reservation = await repository.findReservationById(input.reservationId);

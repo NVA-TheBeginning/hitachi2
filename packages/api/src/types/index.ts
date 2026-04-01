@@ -1,4 +1,4 @@
-import type { ReservationStatus } from "@hitachi2/db";
+import type { ReservationStatus, UserRole } from "@hitachi2/db";
 
 export interface JobQueue {
   send<T extends object>(name: string, data: T): Promise<string | null>;
@@ -10,8 +10,6 @@ export type ParkingSpotSummary = {
   charger: boolean;
 };
 
-export interface IReservationRepository {
-  findReservationActor(): Promise<{ userId: string; carId: string } | null>;
 export type CarSummary = {
   id: string;
   name: string;
@@ -25,14 +23,12 @@ export type AccountSummary = {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   cars: CarSummary[];
 };
 
-export type ParkingReservationRepository = {
-  findReservationActor(
-    userId: string,
-  ): Promise<{ userId: string; carId: string } | null>;
+export interface ParkingReservationRepository {
+  findReservationActor(userId: string): Promise<{ userId: string; carId: string } | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
   findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
   findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
@@ -60,21 +56,9 @@ export type AccountRepository = {
   findAccountByUserId(userId: string): Promise<AccountSummary | null>;
   updateAccountName(userId: string, name: string): Promise<AccountSummary>;
   findCarByIdForUser(carId: string, userId: string): Promise<CarSummary | null>;
-  findCarByLicensePlate(
-    licensePlate: string,
-  ): Promise<{ id: string; userId: string } | null>;
-  createCar(input: {
-    userId: string;
-    name: string;
-    licensePlate: string;
-    electric: boolean;
-  }): Promise<CarSummary>;
-  updateCar(input: {
-    carId: string;
-    name: string;
-    licensePlate: string;
-    electric: boolean;
-  }): Promise<CarSummary>;
+  findCarByLicensePlate(licensePlate: string): Promise<{ id: string; userId: string } | null>;
+  createCar(input: { userId: string; name: string; licensePlate: string; electric: boolean }): Promise<CarSummary>;
+  updateCar(input: { carId: string; name: string; licensePlate: string; electric: boolean }): Promise<CarSummary>;
   countReservationsForCar(carId: string): Promise<number>;
   deleteCar(carId: string): Promise<void>;
 };
