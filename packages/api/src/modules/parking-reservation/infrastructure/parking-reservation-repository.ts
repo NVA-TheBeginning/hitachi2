@@ -43,11 +43,14 @@ export class PrismaReservationRepository implements IReservationRepository {
 
   async releaseUncheckedReservations(date: Date): Promise<void> {
     const { start, end } = getReservationDayRange(date);
+    const cutoff = new Date(date);
+    cutoff.setUTCHours(11, 0, 0, 0);
 
     await prisma.reservation.updateMany({
       where: {
         date: { gte: start, lt: end },
         status: ReservationStatus.RESERVED,
+        createdAt: { lt: cutoff },
       },
       data: { status: ReservationStatus.NO_SHOW },
     });
