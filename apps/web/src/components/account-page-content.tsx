@@ -1,7 +1,8 @@
 "use client";
 
+import { formatDateLong } from "@api/helpers";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CarFrontIcon, Loader2, MailIcon, Trash2Icon, UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -14,27 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
-import { orpc } from "@/utils/orpc";
+import { type client, orpc } from "@/utils/orpc";
 
-type AccountData = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string | Date;
-  reservationQuota: {
-    reservationCount: number;
-    maxReservations: number;
-    remainingReservations: number;
-  };
-  cars: {
-    id: string;
-    name: string;
-    licensePlate: string | null;
-    electric: boolean;
-    reservationCount: number;
-  }[];
-};
+type AccountData = Awaited<ReturnType<typeof client.getMyAccount>>;
 
 const profileSchema = z.object({
   name: z.string().trim().min(2, "Le nom doit contenir au moins 2 caracteres."),
@@ -51,27 +34,9 @@ const carSchema = z.object({
   electric: z.boolean(),
 });
 
-async function runAuthMutation(
-  action: (callbacks: {
-    onSuccess: () => void;
-    onError: (context: {
-      error: {
-        message?: string;
-        statusText?: string;
-      };
-    }) => void;
-  }) => Promise<unknown>,
-) {
-  return new Promise<void>((resolve, reject) => {
-    void action({
-      onSuccess: () => resolve(),
-      onError: ({ error }) => reject(new Error(error.message || error.statusText || "Une erreur est survenue.")),
-    }).catch(reject);
-  });
-}
-
 export default function AccountPageContent() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const accountQuery = useQuery(orpc.getMyAccount.queryOptions());
 
   if (accountQuery.isLoading) {
@@ -81,16 +46,16 @@ export default function AccountPageContent() {
   if (accountQuery.isError || !accountQuery.data) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Compte indisponible</CardTitle>
-          <CardDescription>Impossible de charger les donnees de ton compte pour le moment.</CardDescription>
-        </CardHeader>
+        <CardHeader />
+        <CardContent>
+          <p className="text-destructive">Erreur lors du chargement du compte.</p>
+        </CardContent>
       </Card>
     );
   }
 
   const refreshAccount = async () => {
-    await accountQuery.refetch();
+    await queryClient.invalidateQueries({ queryKey: orpc.getMyAccount.key() });
     router.refresh();
   };
 
@@ -106,7 +71,7 @@ export default function AccountPageContent() {
   );
 }
 
-function ProfileCard({ account, onRefresh }: { account: AccountData; onRefresh: () => Promise<void> }) {
+function ProfileCard({ account, onRefresh }: { account: NonNullable<AccountData>; onRefresh: () => Promise<void> }) {
   const profileForm = useForm({
     defaultValues: {
       name: account.name,
@@ -118,42 +83,29 @@ function ProfileCard({ account, onRefresh }: { account: AccountData; onRefresh: 
     onSubmit: async ({ value }) => {
       const trimmedName = value.name.trim();
       const trimmedEmail = value.email.trim().toLowerCase();
-      const profileTasks: Promise<void>[] = [];
+      const errors: string[] = [];
 
       if (trimmedName !== account.name) {
-        profileTasks.push(
-          runAuthMutation((callbacks) =>
-            authClient.updateUser(
-              { name: trimmedName },
-              {
-                onSuccess: callbacks.onSuccess,
-                onError: callbacks.onError,
-              },
-            ),
-          ),
-        );
+        try {
+          await authClient.updateUser({ name: trimmedName });
+        } catch (e) {
+          errors.push(e instanceof Error ? e.message : "Erreur lors de la mise a jour du nom.");
+        }
       }
 
       if (trimmedEmail !== account.email) {
-        profileTasks.push(
-          runAuthMutation((callbacks) =>
-            authClient.changeEmail(
-              { newEmail: trimmedEmail },
-              {
-                onSuccess: callbacks.onSuccess,
-                onError: callbacks.onError,
-              },
-            ),
-          ),
-        );
+        try {
+          await authClient.changeEmail({ newEmail: trimmedEmail });
+        } catch (e) {
+          errors.push(e instanceof Error ? e.message : "Erreur lors du changement d'email.");
+        }
       }
 
-      if (profileTasks.length === 0) {
-        toast.info("Aucune modification a enregistrer.");
+      if (errors.length > 0) {
+        toast.error(errors[0]);
         return;
       }
 
-      await Promise.all(profileTasks);
       await onRefresh();
       toast.success("Profil mis a jour.");
     },
@@ -181,11 +133,7 @@ function ProfileCard({ account, onRefresh }: { account: AccountData; onRefresh: 
             </div>
             <div className="space-y-2">
               <Label htmlFor="profile-member-since">Membre depuis</Label>
-              <Input
-                id="profile-member-since"
-                value={new Date(account.createdAt).toLocaleDateString("fr-FR")}
-                disabled
-              />
+              <Input id="profile-member-since" value={formatDateLong(account.createdAt)} disabled />
             </div>
           </div>
 
@@ -270,10 +218,12 @@ function ProfileCard({ account, onRefresh }: { account: AccountData; onRefresh: 
   );
 }
 
-function CarsCard({ account, onRefresh }: { account: AccountData; onRefresh: () => Promise<void> }) {
+function CarsCard({ account, onRefresh }: { account: NonNullable<AccountData>; onRefresh: () => Promise<void> }) {
+  const queryClient = useQueryClient();
   const createCarMutation = useMutation(
     orpc.createMyCar.mutationOptions({
       onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: orpc.getMyAccount.key() });
         await onRefresh();
         toast.success("Voiture ajoutee.");
       },
@@ -403,7 +353,13 @@ function CarsCard({ account, onRefresh }: { account: AccountData; onRefresh: () 
   );
 }
 
-function CarItem({ car, onRefresh }: { car: AccountData["cars"][number]; onRefresh: () => Promise<void> }) {
+function CarItem({
+  car,
+  onRefresh,
+}: {
+  car: NonNullable<AccountData>["cars"][number];
+  onRefresh: () => Promise<void>;
+}) {
   const updateMutation = useMutation(
     orpc.updateMyCar.mutationOptions({
       onSuccess: async () => {

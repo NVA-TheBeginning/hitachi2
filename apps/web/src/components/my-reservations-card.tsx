@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateLong } from "@api/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
@@ -7,15 +8,6 @@ import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { orpc } from "@/utils/orpc";
-
-function formatReservationDate(date: string | Date) {
-  return new Date(date).toLocaleDateString("fr-FR", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 export function MyReservationsCard() {
   const queryClient = useQueryClient();
@@ -27,10 +19,10 @@ export function MyReservationsCard() {
       onSuccess: async () => {
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: orpc.getMyReservations.queryOptions().queryKey,
+            queryKey: orpc.getMyReservations.key(),
           }),
           queryClient.invalidateQueries({
-            queryKey: orpc.getMyAccount.queryOptions().queryKey,
+            queryKey: orpc.getMyAccount.key(),
           }),
         ]);
         toast.success("Reservation supprimee.");
@@ -85,7 +77,7 @@ export function MyReservationsCard() {
               className="flex flex-col gap-3 border p-3 md:flex-row md:items-center md:justify-between"
             >
               <div className="space-y-1">
-                <p className="font-medium">{formatReservationDate(reservation.date)}</p>
+                <p className="font-medium">{formatDateLong(reservation.date)}</p>
                 <p className="text-sm">
                   Place: <strong>{reservation.parkingSpot.name}</strong>
                   {" · "}

@@ -1,5 +1,5 @@
-import { ORPCError } from "@orpc/server";
 import { z } from "zod";
+import { handleError } from "../../helpers/handle-error";
 
 import { protectedProcedure, publicProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
@@ -8,19 +8,6 @@ import { deleteMyReservation } from "./application/delete-my-reservation";
 import { getMyReservations } from "./application/get-my-reservations";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
-import {
-  NoCarLinkedToUserError,
-  NoParkingSpotAvailableError,
-  NoReservationForSpotTodayError,
-  ParkingSpotNotFoundError,
-  ReservationAlreadyCheckedInError,
-  ReservationCarNotFoundError,
-  ReservationDeletionForbiddenError,
-  ReservationForbiddenError,
-  ReservationLimitExceededError,
-  ReservationNotFoundError,
-  SeedDataMissingError,
-} from "./domain/errors";
 import { PrismaReservationRepository } from "./infrastructure/parking-reservation-repository";
 
 const repository = new PrismaReservationRepository();
@@ -59,37 +46,7 @@ export const parkingReservationRouter = {
 
         return result;
       } catch (error) {
-        if (error instanceof ReservationLimitExceededError) {
-          throw new ORPCError("FORBIDDEN", {
-            message: error.message,
-          });
-        }
-
-        if (error instanceof NoParkingSpotAvailableError) {
-          throw new ORPCError("CONFLICT", {
-            message: error.message,
-          });
-        }
-
-        if (error instanceof NoCarLinkedToUserError) {
-          throw new ORPCError("PRECONDITION_FAILED", {
-            message: error.message,
-          });
-        }
-
-        if (error instanceof SeedDataMissingError) {
-          throw new ORPCError("PRECONDITION_FAILED", {
-            message: error.message,
-          });
-        }
-
-        if (error instanceof ReservationCarNotFoundError) {
-          throw new ORPCError("NOT_FOUND", {
-            message: error.message,
-          });
-        }
-
-        throw error;
+        handleError(error);
       }
     }),
 
@@ -120,19 +77,7 @@ export const parkingReservationRouter = {
           userId: context.session.user.id,
         });
       } catch (error) {
-        if (error instanceof ReservationNotFoundError) {
-          throw new ORPCError("NOT_FOUND", { message: error.message });
-        }
-
-        if (error instanceof ReservationForbiddenError) {
-          throw new ORPCError("FORBIDDEN", { message: error.message });
-        }
-
-        if (error instanceof ReservationDeletionForbiddenError) {
-          throw new ORPCError("CONFLICT", { message: error.message });
-        }
-
-        throw error;
+        handleError(error);
       }
     }),
 
@@ -143,15 +88,7 @@ export const parkingReservationRouter = {
         userId: context.session.user.id,
       });
     } catch (error) {
-      if (error instanceof ParkingSpotNotFoundError || error instanceof NoReservationForSpotTodayError) {
-        throw new ORPCError("NOT_FOUND", { message: error.message });
-      }
-
-      if (error instanceof ReservationAlreadyCheckedInError) {
-        throw new ORPCError("CONFLICT", { message: error.message });
-      }
-
-      throw error;
+      handleError(error);
     }
   }),
 

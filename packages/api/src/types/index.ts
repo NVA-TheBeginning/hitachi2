@@ -82,16 +82,18 @@ export type UserReservationQuotaSummary = {
   remainingReservations: number;
 };
 
+export type AccountSummary = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  cars: UserCarSummary[];
+  reservationQuota: UserReservationQuotaSummary;
+};
+
 export interface IAccountRepository {
-  getMyAccount(userId: string): Promise<{
-    id: string;
-    name: string;
-    email: string;
-    role: UserRole;
-    createdAt: Date;
-    cars: UserCarSummary[];
-    reservationQuota: UserReservationQuotaSummary;
-  } | null>;
+  getMyAccount(userId: string): Promise<AccountSummary | null>;
   findUserCarById(userId: string, carId: string): Promise<UserCarSummary | null>;
   createUserCar(input: {
     userId: string;

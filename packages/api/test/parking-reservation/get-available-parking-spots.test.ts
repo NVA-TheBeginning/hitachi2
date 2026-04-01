@@ -176,13 +176,13 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     const result = await releaseAndGetAvailableParkingSpots(repo, { date: today }, after11am);
 
     const spotNames = result.parkingSpots.map((s) => s.name);
-    expect(spotNames).not.toContain(RESERVED_SPOT.name); // spot should still be taken
+    expect(spotNames).not.toContain(RESERVED_SPOT.name);
 
     const updated = await prisma.reservation.findUniqueOrThrow({
       where: { id: newReservation.id },
       select: { status: true },
     });
-    expect(updated.status).toBe(ReservationStatus.RESERVED); // new reservation must NOT be NO_SHOW
+    expect(updated.status).toBe(ReservationStatus.RESERVED);
   });
 
   test("should keep RESERVED spots before 11am on the same day", async () => {

@@ -72,6 +72,7 @@ async function getTwoAvailableSpots() {
 describe("parking-reservation.my-reservations", () => {
   test("should list only my active reservations ordered by date", async () => {
     const [spot1, spot2] = await getTwoAvailableSpots();
+    if (!spot1 || !spot2) throw new Error("Not enough parking spots available for the test");
 
     await prisma.reservation.createMany({
       data: [
@@ -79,7 +80,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-1",
           userId: TEST_USER.id,
           carId: TEST_CAR.id,
-          parkingSpotId: spot2?.id,
+          parkingSpotId: spot2.id,
           date: toReservationDate("2099-08-02"),
           status: ReservationStatus.RESERVED,
         },
@@ -87,7 +88,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-2",
           userId: TEST_USER.id,
           carId: TEST_CAR.id,
-          parkingSpotId: spot1?.id,
+          parkingSpotId: spot1.id,
           date: toReservationDate("2099-08-01"),
           status: ReservationStatus.RESERVED,
         },
@@ -95,7 +96,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-3",
           userId: TEST_USER.id,
           carId: TEST_CAR.id,
-          parkingSpotId: spot1?.id,
+          parkingSpotId: spot1.id,
           date: toReservationDate("2099-08-03"),
           status: ReservationStatus.CANCELLED,
         },
@@ -103,7 +104,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-4",
           userId: OTHER_USER.id,
           carId: OTHER_CAR.id,
-          parkingSpotId: spot2?.id,
+          parkingSpotId: spot2.id,
           date: toReservationDate("2099-08-04"),
           status: ReservationStatus.RESERVED,
         },
@@ -120,13 +121,14 @@ describe("parking-reservation.my-reservations", () => {
 
   test("should delete one of my active reservations", async () => {
     const [spot] = await getTwoAvailableSpots();
+    if (!spot) throw new Error("No parking spots available for the test");
 
     await prisma.reservation.create({
       data: {
         id: "test-my-reservations-delete",
         userId: TEST_USER.id,
         carId: TEST_CAR.id,
-        parkingSpotId: spot?.id,
+        parkingSpotId: spot.id,
         date: toReservationDate("2099-09-01"),
         status: ReservationStatus.RESERVED,
       },
@@ -145,19 +147,20 @@ describe("parking-reservation.my-reservations", () => {
 
   test("should reject deletion of another user's reservation", async () => {
     const [spot] = await getTwoAvailableSpots();
+    if (!spot) throw new Error("No parking spots available for the test");
 
     await prisma.reservation.create({
       data: {
         id: "test-my-reservations-foreign",
         userId: OTHER_USER.id,
         carId: OTHER_CAR.id,
-        parkingSpotId: spot?.id,
+        parkingSpotId: spot.id,
         date: toReservationDate("2099-10-01"),
         status: ReservationStatus.RESERVED,
       },
     });
 
-    await expect(
+    expect(
       call(appRouter.deleteMyReservation, { reservationId: "test-my-reservations-foreign" }, userCtx),
     ).rejects.toMatchObject({
       code: "FORBIDDEN",

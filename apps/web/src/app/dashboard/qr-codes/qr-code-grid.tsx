@@ -6,9 +6,11 @@ import { QRCodeSVG } from "qrcode.react";
 import { orpc } from "@/utils/orpc";
 
 export function QrCodeGrid() {
-  const { data: spots, isPending } = useQuery(orpc.getAllParkingSpots.queryOptions());
+  const { data: spots, isPending, isError } = useQuery(orpc.getAllParkingSpots.queryOptions());
 
   if (isPending) return <p className="text-muted-foreground">Chargement...</p>;
+
+  if (isError) return <p className="text-destructive">Erreur lors du chargement des places de parking.</p>;
 
   return (
     <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-4">

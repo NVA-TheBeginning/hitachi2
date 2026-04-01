@@ -1,4 +1,5 @@
-import type { IReservationRepository, ReservationActor, UserReservationSummary } from "@api/types";
+import { getReservationDayRange } from "@api/helpers";
+import type { IReservationRepository, ReservationActor } from "@api/types";
 import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
@@ -24,31 +25,11 @@ const userReservationSelect = {
   },
 } as const;
 
-function getReservationDayRange(date: Date) {
-  const start = new Date(date);
-  const end = new Date(date);
-  end.setUTCDate(end.getUTCDate() + 1);
-
-  return { start, end };
-}
-
 function buildAvailableSpotWhere(reservedSpotIds: string[], charger?: boolean) {
   return {
     available: true,
     ...(typeof charger === "boolean" ? { charger } : {}),
     ...(reservedSpotIds.length > 0 ? { id: { notIn: reservedSpotIds } } : {}),
-  };
-}
-
-function toUserReservationSummary(
-  reservation: Prisma.ReservationGetPayload<{ select: typeof userReservationSelect }>,
-): UserReservationSummary {
-  return {
-    id: reservation.id,
-    date: reservation.date,
-    status: reservation.status,
-    car: reservation.car,
-    parkingSpot: reservation.parkingSpot,
   };
 }
 
@@ -237,7 +218,13 @@ export class PrismaReservationRepository implements IReservationRepository {
       select: userReservationSelect,
     });
 
-    return reservations.map(toUserReservationSummary);
+    return reservations.map((r) => ({
+      id: r.id,
+      date: r.date,
+      status: r.status,
+      car: r.car,
+      parkingSpot: r.parkingSpot,
+    }));
   }
 
   async findReservationById(reservationId: string) {
