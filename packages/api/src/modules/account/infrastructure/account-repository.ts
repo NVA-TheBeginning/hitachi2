@@ -1,6 +1,7 @@
 import type { IAccountRepository } from "@api/types";
-import prisma, { Prisma } from "@hitachi2/db";
+import prisma, { Prisma, ReservationStatus } from "@hitachi2/db";
 import { CarLicensePlateAlreadyUsedError } from "../domain/errors";
+import { getMaxReservationsForRole } from "../../../helpers/reservation-limits";
 
 const userCarSelect = {
   id: true,
@@ -34,28 +35,43 @@ function mapUniqueConstraintError(error: unknown, licensePlate: string): never {
 
 export class PrismaAccountRepository implements IAccountRepository {
   async getMyAccount(userId: string) {
-    const account = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        cars: {
-          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-          select: userCarSelect,
+    const [account, reservationCount] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          cars: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: userCarSelect,
+          },
         },
-      },
-    });
+      }),
+      prisma.reservation.count({
+        where: {
+          userId,
+          status: ReservationStatus.RESERVED,
+        },
+      }),
+    ]);
 
     if (!account) {
       return null;
     }
 
+    const maxReservations = getMaxReservationsForRole(account.role);
+
     return {
       ...account,
       cars: account.cars.map(toUserCarSummary),
+      reservationQuota: {
+        reservationCount,
+        maxReservations,
+        remainingReservations: Math.max(0, maxReservations - reservationCount),
+      },
     };
   }
 

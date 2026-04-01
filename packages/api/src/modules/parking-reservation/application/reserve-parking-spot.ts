@@ -1,6 +1,5 @@
 import { toReservationDate } from "@api/helpers";
 import type { IReservationRepository } from "@api/types";
-import { UserRole } from "@hitachi2/db";
 import {
   NoCarLinkedToUserError,
   NoParkingSpotAvailableError,
@@ -8,6 +7,7 @@ import {
   ReservationLimitExceededError,
   SeedDataMissingError,
 } from "../domain/errors";
+import { getMaxReservationsForRole } from "../../../helpers/reservation-limits";
 
 export async function reserveParkingSpot(
   repository: IReservationRepository,
@@ -33,7 +33,7 @@ export async function reserveParkingSpot(
     throw new SeedDataMissingError();
   }
 
-  const maxAllowed = userInfo.role === UserRole.MANAGER ? 30 : 5;
+  const maxAllowed = getMaxReservationsForRole(userInfo.role);
 
   if (userInfo.reservationCount >= maxAllowed) {
     throw new ReservationLimitExceededError(userInfo.reservationCount, maxAllowed);
