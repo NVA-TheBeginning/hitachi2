@@ -5,6 +5,13 @@ export class SeedDataMissingError extends Error {
   }
 }
 
+export class NoCarLinkedToUserError extends Error {
+  constructor() {
+    super("Aucune voiture n'est liee a votre compte. Ajoutez-en une dans Mon compte avant de reserver.");
+    this.name = "NoCarLinkedToUserError";
+  }
+}
+
 export class NoParkingSpotAvailableError extends Error {
   constructor(date: string) {
     super(`Aucune place libre n'est disponible pour le ${date}.`);

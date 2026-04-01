@@ -40,6 +40,13 @@ export default function UserMenu() {
           <DropdownMenuSeparator />
           <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
           <DropdownMenuItem
+            onClick={() => {
+              router.push("/account");
+            }}
+          >
+            Mon compte
+          </DropdownMenuItem>
+          <DropdownMenuItem
             variant="destructive"
             onClick={() => {
               authClient.signOut({

@@ -89,7 +89,14 @@ async function seedCar() {
     return;
   }
 
-  await prisma.car.create({ data: { userId: user.id, electric: false } });
+  await prisma.car.create({
+    data: {
+      userId: user.id,
+      name: "Voiture principale",
+      licensePlate: "AA-001-AA",
+      electric: false,
+    },
+  });
   console.log("Created car for test@user.com.");
 }
 
@@ -114,7 +121,14 @@ async function seedTestUser(name: string, email: string, role: UserRole, electri
       password: hashedPassword,
     },
   });
-  await prisma.car.create({ data: { userId, electric } });
+  await prisma.car.create({
+    data: {
+      userId,
+      name: `${name} car`,
+      licensePlate: `${name.slice(0, 2).toUpperCase()}-${role.slice(0, 2)}-${userId.slice(-4).toUpperCase()}`,
+      electric,
+    },
+  });
   console.log(`Created user: ${email} (${role})`);
 }
 
