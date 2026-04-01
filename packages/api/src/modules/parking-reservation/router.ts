@@ -2,16 +2,16 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import { protectedProcedure, publicProcedure } from "../../index";
-import { checkInReservation } from "./application/check-in-reservation";
+import { checkInBySpot } from "./application/check-in-by-spot";
 import { getAvailableParkingSpots } from "./application/get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
   NoCarLinkedToUserError,
   NoParkingSpotAvailableError,
+  NoReservationForSpotTodayError,
+  ParkingSpotNotFoundError,
   ReservationAlreadyCheckedInError,
-  ReservationForbiddenError,
   ReservationLimitExceededError,
-  ReservationNotFoundError,
   SeedDataMissingError,
 } from "./domain/errors";
 import { PrismaReservationRepository } from "./infrastructure/parking-reservation-repository";
@@ -78,19 +78,15 @@ export const parkingReservationRouter = {
       return getAvailableParkingSpots(repository, input);
     }),
 
-  checkIn: protectedProcedure.input(z.object({ reservationId: z.string() })).handler(async ({ input, context }) => {
+  checkInBySpot: protectedProcedure.input(z.object({ spotId: z.string() })).handler(async ({ input, context }) => {
     try {
-      return await checkInReservation(repository, {
-        reservationId: input.reservationId,
+      return await checkInBySpot(repository, {
+        spotId: input.spotId,
         userId: context.session.user.id,
       });
     } catch (error) {
-      if (error instanceof ReservationNotFoundError) {
+      if (error instanceof ParkingSpotNotFoundError || error instanceof NoReservationForSpotTodayError) {
         throw new ORPCError("NOT_FOUND", { message: error.message });
-      }
-
-      if (error instanceof ReservationForbiddenError) {
-        throw new ORPCError("FORBIDDEN", { message: error.message });
       }
 
       if (error instanceof ReservationAlreadyCheckedInError) {
@@ -99,5 +95,9 @@ export const parkingReservationRouter = {
 
       throw error;
     }
+  }),
+
+  getAllParkingSpots: protectedProcedure.handler(() => {
+    return repository.findAllParkingSpots();
   }),
 };

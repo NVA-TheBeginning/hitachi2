@@ -30,7 +30,13 @@ export interface IReservationRepository {
     parkingSpot: ParkingSpotSummary;
     remainingSpots: number;
   } | null>;
-  findReservationById(id: string): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
+  findParkingSpotById(spotId: string): Promise<ParkingSpotSummary | null>;
+  findTodayReservationForUserAndSpot(
+    userId: string,
+    spotId: string,
+    today: Date,
+  ): Promise<{ id: string; status: ReservationStatus } | null>;
+  findAllParkingSpots(): Promise<ParkingSpotSummary[]>;
   checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
   getUserReservations(userId: string): Promise<{ reservationCount: number; role: UserRole }>;
 }
