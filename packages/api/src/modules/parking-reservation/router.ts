@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { protectedProcedure, publicProcedure } from "../../index";
 import { checkInReservation } from "./application/check-in-reservation";
-import { getAvailableParkingSpots } from "./application/get-available-parking-spots";
+import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
   NoParkingSpotAvailableError,
@@ -68,7 +68,7 @@ export const parkingReservationRouter = {
         .optional(),
     )
     .handler(({ input }) => {
-      return getAvailableParkingSpots(repository, input);
+      return releaseAndGetAvailableParkingSpots(repository, input);
     }),
 
   checkIn: protectedProcedure.input(z.object({ reservationId: z.string() })).handler(async ({ input, context }) => {

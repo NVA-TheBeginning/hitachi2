@@ -27,18 +27,30 @@ export class PrismaReservationRepository implements IReservationRepository {
     return { userId: car.userId, carId: car.id };
   }
 
-  async findReservedSpotIdsForDate(date: Date, freeUncheckedIn = false): Promise<string[]> {
+  async findReservedSpotIdsForDate(date: Date): Promise<string[]> {
     const { start, end } = getReservationDayRange(date);
 
     const reservations = await prisma.reservation.findMany({
       where: {
         date: { gte: start, lt: end },
-        status: freeUncheckedIn ? ReservationStatus.COMPLETED : ReservationStatus.RESERVED,
+        status: ReservationStatus.RESERVED,
       },
       select: { parkingSpotId: true },
     });
 
     return reservations.map((r) => r.parkingSpotId);
+  }
+
+  async releaseUncheckedReservations(date: Date): Promise<void> {
+    const { start, end } = getReservationDayRange(date);
+
+    await prisma.reservation.updateMany({
+      where: {
+        date: { gte: start, lt: end },
+        status: ReservationStatus.RESERVED,
+      },
+      data: { status: ReservationStatus.NO_SHOW },
+    });
   }
 
   async findFirstAvailableSpot(excludedSpotIds: string[]) {

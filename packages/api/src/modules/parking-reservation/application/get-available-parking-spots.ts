@@ -1,18 +1,10 @@
 import { getCurrentReservationDateString, toReservationDate } from "@api/helpers";
 import type { IReservationRepository } from "@api/types";
 
-export async function getAvailableParkingSpots(
-  repository: IReservationRepository,
-  input?: { date?: string },
-  now = new Date(),
-) {
-  const today = getCurrentReservationDateString(now);
-  const date = input?.date ?? today;
+export async function getAvailableParkingSpots(repository: IReservationRepository, input?: { date?: string }) {
+  const date = input?.date ?? getCurrentReservationDateString();
   const reservationDate = toReservationDate(date);
-
-  const freeUncheckedIn = date === today && now.getUTCHours() >= 11;
-
-  const reservedSpotIds = await repository.findReservedSpotIdsForDate(reservationDate, freeUncheckedIn);
+  const reservedSpotIds = await repository.findReservedSpotIdsForDate(reservationDate);
   const parkingSpots = await repository.findAvailableSpots(reservedSpotIds);
 
   return {

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:tes
 import { getCurrentReservationDateString } from "@api/helpers";
 import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
-import { getAvailableParkingSpots } from "../../src/modules/parking-reservation/application/get-available-parking-spots";
+import { releaseAndGetAvailableParkingSpots } from "../../src/modules/parking-reservation/application/release-and-get-available-parking-spots";
 import { PrismaReservationRepository } from "../../src/modules/parking-reservation/infrastructure/parking-reservation-repository";
 import { appRouter } from "../../src/routers/index";
 
@@ -151,15 +151,40 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     expect(spotNames).not.toContain(FREE_SPOT.name);
   });
 
-  test("should free RESERVED spots past 11am on the same day", async () => {
+  test("should free RESERVED spots past 11am on the same day and mark them NO_SHOW", async () => {
     const today = getCurrentReservationDateString();
-    await createReservation(RESERVED_SPOT.id, today);
+    const reservation = await createReservation(RESERVED_SPOT.id, today);
 
     const after11am = new Date(`${today}T11:30:00.000Z`);
-    const result = await getAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, after11am);
+    const result = await releaseAndGetAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, after11am);
 
     const spotNames = result.parkingSpots.map((s) => s.name);
     expect(spotNames).toContain(RESERVED_SPOT.name);
+
+    const updated = await prisma.reservation.findUniqueOrThrow({ where: { id: reservation.id }, select: { status: true } });
+    expect(updated.status).toBe(ReservationStatus.NO_SHOW);
+  });
+
+  test("should NOT free a reservation made after 11am when checking again", async () => {
+    const today = getCurrentReservationDateString();
+    const after11am = new Date(`${today}T11:30:00.000Z`);
+    const repo = new PrismaReservationRepository();
+
+    // Step 1: original reservation exists before 11am, gets freed
+    await createReservation(RESERVED_SPOT.id, today);
+    await releaseAndGetAvailableParkingSpots(repo, { date: today }, after11am);
+
+    // Step 2: someone makes a new reservation after 11am on the freed spot
+    const newReservation = await createReservation(RESERVED_SPOT.id, today);
+
+    // Step 3: another availability check runs — should NOT free the new reservation
+    const result = await releaseAndGetAvailableParkingSpots(repo, { date: today }, after11am);
+
+    const spotNames = result.parkingSpots.map((s) => s.name);
+    expect(spotNames).not.toContain(RESERVED_SPOT.name); // spot should still be taken
+
+    const updated = await prisma.reservation.findUniqueOrThrow({ where: { id: newReservation.id }, select: { status: true } });
+    expect(updated.status).toBe(ReservationStatus.RESERVED); // new reservation must NOT be NO_SHOW
   });
 
   test("should keep RESERVED spots before 11am on the same day", async () => {
@@ -167,7 +192,7 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     await createReservation(RESERVED_SPOT.id, today);
 
     const before11am = new Date(`${today}T10:30:00.000Z`);
-    const result = await getAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, before11am);
+    const result = await releaseAndGetAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, before11am);
 
     const spotNames = result.parkingSpots.map((s) => s.name);
     expect(spotNames).not.toContain(RESERVED_SPOT.name);
