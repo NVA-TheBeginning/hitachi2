@@ -82,6 +82,26 @@ export class PrismaReservationRepository implements IReservationRepository {
     return reservations.map((r) => r.parkingSpotId);
   }
 
+  async releaseUncheckedReservations(date: Date): Promise<void> {
+    const { start, end } = getReservationDayRange(date);
+
+    const noShowSpots = await prisma.reservation.findMany({
+      where: { date: { gte: start, lt: end }, status: ReservationStatus.NO_SHOW },
+      select: { parkingSpotId: true },
+    });
+
+    const excludedSpotIds = noShowSpots.map((r) => r.parkingSpotId);
+
+    await prisma.reservation.updateMany({
+      where: {
+        date: { gte: start, lt: end },
+        status: ReservationStatus.RESERVED,
+        parkingSpotId: { notIn: excludedSpotIds },
+      },
+      data: { status: ReservationStatus.NO_SHOW },
+    });
+  }
+
   async findFirstAvailableSpot(excludedSpotIds: string[]) {
     return prisma.parkingSpot.findFirst({
       where: buildAvailableSpotWhere(excludedSpotIds),

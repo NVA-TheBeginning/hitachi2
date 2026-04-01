@@ -40,6 +40,7 @@ model Reservation {
   parkingSpot   ParkingSpot       @relation(fields: [parkingSpotId], references: [id])
   status        ReservationStatus @default(RESERVED)
   date          DateTime
+  createdAt     DateTime          @default(now())
   checkIn       CheckIn?
 
   @@index([userId])

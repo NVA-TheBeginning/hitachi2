@@ -1,5 +1,9 @@
 import type { ReservationStatus, UserRole } from "@hitachi2/db";
 
+export const QUEUE_NAMES = {
+  SEND_EMAIL: "send-email",
+} as const;
+
 export interface JobQueue {
   send<T extends object>(name: string, data: T): Promise<string | null>;
 }
@@ -32,6 +36,7 @@ export type UserReservationSummary = {
 export interface IReservationRepository {
   findReservationActor(userId: string, carId?: string): Promise<ReservationActor | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
+  releaseUncheckedReservations(date: Date): Promise<void>;
   findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
   findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
   countAvailableParkingSpots(): Promise<number>;
