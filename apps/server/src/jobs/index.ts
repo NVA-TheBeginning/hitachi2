@@ -16,10 +16,11 @@ function esc(s: string) {
 }
 
 export async function registerWorkers(boss: PgBoss) {
-  const usesend = new UseSend(env.USESEND_API_KEY);
+  const usesend = env.USESEND_API_KEY ? new UseSend(env.USESEND_API_KEY) : null;
 
   await boss.createQueue(QUEUE_NAMES.SEND_EMAIL);
   await boss.work<SendEmailJob>(QUEUE_NAMES.SEND_EMAIL, async (jobs) => {
+    if (!usesend) return;
     await Promise.all(
       jobs.map((job) => {
         const { to, subject, reservationId, date, parkingSpotName } = job.data;
