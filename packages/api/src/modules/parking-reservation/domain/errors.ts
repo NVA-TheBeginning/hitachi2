@@ -47,6 +47,13 @@ export class ReservationAlreadyCheckedInError extends Error {
   }
 }
 
+export class ReservationDeletionForbiddenError extends Error {
+  constructor(reservationId: string) {
+    super(`La reservation ${reservationId} ne peut pas etre supprimee.`);
+    this.name = "ReservationDeletionForbiddenError";
+  }
+}
+
 export class ReservationLimitExceededError extends Error {
   constructor(currentCount: number, maxAllowed: number) {
     super(`Vous avez deja reserve ${currentCount} jour(s). Maximum autorise: ${maxAllowed} jour(s).`);

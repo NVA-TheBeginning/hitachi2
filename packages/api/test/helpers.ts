@@ -44,6 +44,7 @@ export function createContext(user: TestUser): TestContext {
           emailVerified: user.emailVerified,
           name: user.name,
           image: null,
+          role: user.role ?? null,
         },
       },
       jobQueue: { send: async () => null },

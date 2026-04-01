@@ -4,6 +4,8 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
+import { deleteMyReservation } from "./application/delete-my-reservation";
+import { getMyReservations } from "./application/get-my-reservations";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import {
@@ -13,7 +15,10 @@ import {
   ParkingSpotNotFoundError,
   ReservationAlreadyCheckedInError,
   ReservationCarNotFoundError,
+  ReservationDeletionForbiddenError,
+  ReservationForbiddenError,
   ReservationLimitExceededError,
+  ReservationNotFoundError,
   SeedDataMissingError,
 } from "./domain/errors";
 import { PrismaReservationRepository } from "./infrastructure/parking-reservation-repository";
@@ -98,6 +103,37 @@ export const parkingReservationRouter = {
     )
     .handler(({ input }) => {
       return releaseAndGetAvailableParkingSpots(repository, input);
+    }),
+
+  getMyReservations: protectedProcedure.handler(({ context }) => {
+    return getMyReservations(repository, {
+      userId: context.session.user.id,
+    });
+  }),
+
+  deleteMyReservation: protectedProcedure
+    .input(z.object({ reservationId: z.string() }))
+    .handler(async ({ input, context }) => {
+      try {
+        return await deleteMyReservation(repository, {
+          reservationId: input.reservationId,
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        if (error instanceof ReservationNotFoundError) {
+          throw new ORPCError("NOT_FOUND", { message: error.message });
+        }
+
+        if (error instanceof ReservationForbiddenError) {
+          throw new ORPCError("FORBIDDEN", { message: error.message });
+        }
+
+        if (error instanceof ReservationDeletionForbiddenError) {
+          throw new ORPCError("CONFLICT", { message: error.message });
+        }
+
+        throw error;
+      }
     }),
 
   checkInBySpot: protectedProcedure.input(z.object({ spotId: z.string() })).handler(async ({ input, context }) => {
