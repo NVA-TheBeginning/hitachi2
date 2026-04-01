@@ -6,9 +6,9 @@ import { ArrowLeftIcon, ArrowRightIcon, ZapIcon } from "lucide-react";
 import { useState } from "react";
 import Loader from "@/components/loader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { orpc } from "@/utils/orpc";
 
 type ParkingSpot = {

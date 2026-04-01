@@ -5,9 +5,9 @@ import { CameraIcon, Loader2, Trash2Icon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { orpc } from "@/utils/orpc";
 
 function formatReservationDate(date: string | Date) {
@@ -33,13 +33,7 @@ type ReservationItem = {
   };
 };
 
-function MobileCheckInCamera({
-  reservation,
-  onClose,
-}: {
-  reservation: ReservationItem;
-  onClose: () => void;
-}) {
+function MobileCheckInCamera({ reservation, onClose }: { reservation: ReservationItem; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraState, setCameraState] = useState<"starting" | "ready" | "error">("starting");
