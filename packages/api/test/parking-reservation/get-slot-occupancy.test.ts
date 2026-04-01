@@ -26,11 +26,21 @@ const ALL_SPOT_IDS = ALL_SPOTS.map((s) => s.id);
 const authedContext = createContext(USER);
 const TODAY = getCurrentReservationDateString();
 
+let disabledSpotIds: string[] = [];
+
 beforeAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: { in: ALL_SPOT_IDS } } });
   await prisma.parkingSpot.deleteMany({ where: { id: { in: ALL_SPOT_IDS } } });
   await prisma.car.deleteMany({ where: { id: CAR.id } });
   await prisma.user.deleteMany({ where: { id: USER.id } });
+
+  // Disable all pre-existing available spots so totalSlots only reflects our test data
+  const existing = await prisma.parkingSpot.findMany({
+    where: { available: true },
+    select: { id: true },
+  });
+  disabledSpotIds = existing.map((s) => s.id);
+  await prisma.parkingSpot.updateMany({ where: { id: { in: disabledSpotIds } }, data: { available: false } });
 
   await prisma.user.create({ data: USER });
   await prisma.car.create({ data: CAR });
@@ -42,6 +52,9 @@ afterAll(async () => {
   await prisma.parkingSpot.deleteMany({ where: { id: { in: ALL_SPOT_IDS } } });
   await prisma.car.delete({ where: { id: CAR.id } });
   await prisma.user.delete({ where: { id: USER.id } });
+
+  // Restore the spots we disabled
+  await prisma.parkingSpot.updateMany({ where: { id: { in: disabledSpotIds } }, data: { available: true } });
 });
 
 beforeEach(async () => {

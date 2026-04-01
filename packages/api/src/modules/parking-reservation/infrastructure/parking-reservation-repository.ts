@@ -269,7 +269,7 @@ export class PrismaReservationRepository implements IReservationRepository {
         _count: { _all: true },
       }),
       prisma.reservation.findMany({
-        where: { date: dateRange, status: activeStatuses },
+        where: { date: dateRange, status: activeStatuses, parkingSpot: { available: true } },
         select: { parkingSpot: { select: { charger: true } } },
       }),
     ]);
