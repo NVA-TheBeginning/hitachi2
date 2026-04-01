@@ -10,8 +10,8 @@ import {
   NoParkingSpotAvailableError,
   NoReservationForSpotTodayError,
   ParkingSpotNotFoundError,
-  ReservationCarNotFoundError,
   ReservationAlreadyCheckedInError,
+  ReservationCarNotFoundError,
   ReservationLimitExceededError,
   SeedDataMissingError,
 } from "./domain/errors";

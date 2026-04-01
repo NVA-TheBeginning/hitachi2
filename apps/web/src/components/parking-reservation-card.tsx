@@ -67,7 +67,9 @@ export function ParkingReservationCard() {
           </div>
 
           <Button
-            disabled={!selectedDate || !resolvedSelectedCarId || reservationMutation.isPending || accountQuery.isLoading}
+            disabled={
+              !selectedDate || !resolvedSelectedCarId || reservationMutation.isPending || accountQuery.isLoading
+            }
             onClick={() =>
               reservationMutation.mutate({
                 carId: resolvedSelectedCarId,

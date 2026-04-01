@@ -86,7 +86,10 @@ export class PrismaReservationRepository implements IReservationRepository {
     });
   }
 
-  async findAndCreateReservation(date: Date, actor: ReservationActor): Promise<{
+  async findAndCreateReservation(
+    date: Date,
+    actor: ReservationActor,
+  ): Promise<{
     id: string;
     parkingSpot: { id: string; name: string; charger: boolean };
     remainingSpots: number;
@@ -107,7 +110,7 @@ export class PrismaReservationRepository implements IReservationRepository {
           const reservedSpotIds = reservations.map((r) => r.parkingSpotId);
 
           const preferredSpot = await tx.parkingSpot.findFirst({
-            where: buildAvailableSpotWhere(reservedSpotIds, actor.electric ? true : false),
+            where: buildAvailableSpotWhere(reservedSpotIds, !!actor.electric),
             orderBy: { name: "asc" },
             select: parkingSpotSummarySelect,
           });
