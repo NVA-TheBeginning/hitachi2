@@ -1,4 +1,5 @@
 "use client";
+import type { Route } from "next";
 import Link from "next/link";
 
 import { authClient } from "@/lib/auth-client";
@@ -9,11 +10,12 @@ import UserMenu from "./user-menu";
 export default function Header() {
   const { data: session } = authClient.useSession();
 
-  const links = [
+  const links: ReadonlyArray<{ to: Route; label: string }> = [
     { to: "/status", label: "Status" },
     { to: "/dashboard", label: "Dashboard" },
+    { to: "/parking" as Route, label: "Parking" },
     { to: "/account", label: "Mon compte" },
-  ] as const;
+  ];
 
   return (
     <div>
