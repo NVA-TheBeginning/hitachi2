@@ -76,7 +76,7 @@ describe("parking-reservation.reserveParkingSpot", () => {
       })),
     });
 
-    expect(call(appRouter.reserveParkingSpot, { date: CONFLICT_DATE }, employeeCtx)).rejects.toMatchObject({
+    await expect(call(appRouter.reserveParkingSpot, { date: CONFLICT_DATE }, employeeCtx)).rejects.toMatchObject({
       code: "CONFLICT",
     });
   });
