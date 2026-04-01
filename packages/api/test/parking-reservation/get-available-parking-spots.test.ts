@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { getCurrentReservationDateString } from "@api/helpers";
+import { getAvailableParkingSpots } from "../../src/modules/parking-reservation/application/get-available-parking-spots";
+import { PrismaReservationRepository } from "../../src/modules/parking-reservation/infrastructure/parking-reservation-repository";
 import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
@@ -147,6 +149,28 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     expect(result.date).toBe(today);
     expect(spotNames).toContain(RESERVED_SPOT.name);
     expect(spotNames).not.toContain(FREE_SPOT.name);
+  });
+
+  test("should free RESERVED spots past 11am on the same day", async () => {
+    const today = getCurrentReservationDateString();
+    await createReservation(RESERVED_SPOT.id, today);
+
+    const after11am = new Date(`${today}T11:30:00.000Z`);
+    const result = await getAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, after11am);
+
+    const spotNames = result.parkingSpots.map((s) => s.name);
+    expect(spotNames).toContain(RESERVED_SPOT.name);
+  });
+
+  test("should keep RESERVED spots before 11am on the same day", async () => {
+    const today = getCurrentReservationDateString();
+    await createReservation(RESERVED_SPOT.id, today);
+
+    const before11am = new Date(`${today}T10:30:00.000Z`);
+    const result = await getAvailableParkingSpots(new PrismaReservationRepository(), { date: today }, before11am);
+
+    const spotNames = result.parkingSpots.map((s) => s.name);
+    expect(spotNames).not.toContain(RESERVED_SPOT.name);
   });
 
   test("should throw BAD_REQUEST on invalid date format", async () => {

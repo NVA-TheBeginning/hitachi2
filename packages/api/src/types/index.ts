@@ -12,7 +12,7 @@ export type ParkingSpotSummary = {
 
 export interface IReservationRepository {
   findReservationActor(): Promise<{ userId: string; carId: string } | null>;
-  findReservedSpotIdsForDate(date: Date): Promise<string[]>;
+  findReservedSpotIdsForDate(date: Date, freeUncheckedIn?: boolean): Promise<string[]>;
   findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
   findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
   countAvailableParkingSpots(): Promise<number>;
