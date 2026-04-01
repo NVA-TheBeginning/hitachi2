@@ -1,4 +1,4 @@
-import type { IReservationRepository } from "@api/types";
+import type { IReservationRepository, ReservationActor } from "@api/types";
 import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
@@ -15,17 +15,28 @@ function getReservationDayRange(date: Date) {
   return { start, end };
 }
 
+function buildAvailableSpotWhere(reservedSpotIds: string[], charger?: boolean) {
+  return {
+    available: true,
+    ...(typeof charger === "boolean" ? { charger } : {}),
+    ...(reservedSpotIds.length > 0 ? { id: { notIn: reservedSpotIds } } : {}),
+  };
+}
+
 export class PrismaReservationRepository implements IReservationRepository {
-  async findReservationActor(userId: string) {
+  async findReservationActor(userId: string, carId?: string) {
     const car = await prisma.car.findFirst({
-      where: { userId },
+      where: {
+        userId,
+        ...(carId ? { id: carId } : {}),
+      },
       orderBy: { id: "asc" },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, electric: true },
     });
 
     if (!car) return null;
 
-    return { userId: car.userId, carId: car.id };
+    return { userId: car.userId, carId: car.id, electric: car.electric };
   }
 
   async findReservedSpotIdsForDate(date: Date): Promise<string[]> {
@@ -44,10 +55,7 @@ export class PrismaReservationRepository implements IReservationRepository {
 
   async findFirstAvailableSpot(excludedSpotIds: string[]) {
     return prisma.parkingSpot.findFirst({
-      where: {
-        available: true,
-        ...(excludedSpotIds.length > 0 ? { id: { notIn: excludedSpotIds } } : {}),
-      },
+      where: buildAvailableSpotWhere(excludedSpotIds),
       orderBy: { name: "asc" },
       select: parkingSpotSummarySelect,
     });
@@ -55,10 +63,7 @@ export class PrismaReservationRepository implements IReservationRepository {
 
   async findAvailableSpots(excludedSpotIds: string[]) {
     return prisma.parkingSpot.findMany({
-      where: {
-        available: true,
-        ...(excludedSpotIds.length > 0 ? { id: { notIn: excludedSpotIds } } : {}),
-      },
+      where: buildAvailableSpotWhere(excludedSpotIds),
       orderBy: { name: "asc" },
       select: parkingSpotSummarySelect,
     });
@@ -83,7 +88,7 @@ export class PrismaReservationRepository implements IReservationRepository {
 
   async findAndCreateReservation(
     date: Date,
-    actor: { userId: string; carId: string },
+    actor: ReservationActor,
   ): Promise<{
     id: string;
     parkingSpot: { id: string; name: string; charger: boolean };
@@ -104,14 +109,22 @@ export class PrismaReservationRepository implements IReservationRepository {
 
           const reservedSpotIds = reservations.map((r) => r.parkingSpotId);
 
-          const spot = await tx.parkingSpot.findFirst({
-            where: {
-              available: true,
-              ...(reservedSpotIds.length > 0 ? { id: { notIn: reservedSpotIds } } : {}),
-            },
+          const preferredSpot = await tx.parkingSpot.findFirst({
+            where: buildAvailableSpotWhere(reservedSpotIds, !!actor.electric),
             orderBy: { name: "asc" },
             select: parkingSpotSummarySelect,
           });
+
+          const fallbackSpot =
+            actor.electric && !preferredSpot
+              ? await tx.parkingSpot.findFirst({
+                  where: buildAvailableSpotWhere(reservedSpotIds, false),
+                  orderBy: { name: "asc" },
+                  select: parkingSpotSummarySelect,
+                })
+              : null;
+
+          const spot = preferredSpot ?? fallbackSpot;
 
           if (!spot) return null;
 

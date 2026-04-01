@@ -341,7 +341,7 @@ function CarsCard({ account, onRefresh }: { account: AccountData; onRefresh: () 
                     checked={field.state.value}
                     onCheckedChange={(checked) => field.handleChange(Boolean(checked))}
                   />
-                  <span className="text-sm">Vehicule electrique</span>
+                  <span className="text-sm">Vehicule electrique / hybride rechargeable</span>
                 </label>
               )}
             </createCarForm.Field>
@@ -489,7 +489,7 @@ function CarItem({ car, onRefresh }: { car: AccountData["cars"][number]; onRefre
                   checked={field.state.value}
                   onCheckedChange={(checked) => field.handleChange(Boolean(checked))}
                 />
-                <span className="text-sm">Vehicule electrique</span>
+                <span className="text-sm">Vehicule electrique / hybride rechargeable</span>
               </label>
             )}
           </carForm.Field>
