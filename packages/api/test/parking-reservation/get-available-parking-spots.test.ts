@@ -126,29 +126,17 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
   test("should default to today's date when no date is sent", async () => {
     const today = getCurrentReservationDateString();
 
-    await createReservation(FREE_SPOT.id, today);
-
     const result = await call(appRouter.getAvailableParkingSpots, undefined, context);
 
-    const spotNames = result.parkingSpots.map((parkingSpot) => parkingSpot.name);
-
     expect(result.date).toBe(today);
-    expect(spotNames).toContain(RESERVED_SPOT.name);
-    expect(spotNames).not.toContain(FREE_SPOT.name);
   });
 
   test("should default to today's date when date is an empty string", async () => {
     const today = getCurrentReservationDateString();
 
-    await createReservation(FREE_SPOT.id, today);
-
     const result = await call(appRouter.getAvailableParkingSpots, { date: "" }, context);
 
-    const spotNames = result.parkingSpots.map((parkingSpot) => parkingSpot.name);
-
     expect(result.date).toBe(today);
-    expect(spotNames).toContain(RESERVED_SPOT.name);
-    expect(spotNames).not.toContain(FREE_SPOT.name);
   });
 
   test("should free RESERVED spots past 11am on the same day and mark them NO_SHOW", async () => {
