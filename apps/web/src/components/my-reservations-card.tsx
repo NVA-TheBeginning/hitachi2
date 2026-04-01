@@ -97,7 +97,8 @@ export function MyReservationsCard() {
                 disabled={deleteReservationMutation.isPending}
                 onClick={() => deleteReservationMutation.mutate({ reservationId: reservation.id })}
               >
-                {deleteReservationMutation.isPending && deleteReservationMutation.variables?.reservationId === reservation.id ? (
+                {deleteReservationMutation.isPending &&
+                deleteReservationMutation.variables?.reservationId === reservation.id ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <>

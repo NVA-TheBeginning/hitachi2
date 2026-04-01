@@ -5,7 +5,6 @@ import { protectedProcedure, publicProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
 import { deleteMyReservation } from "./application/delete-my-reservation";
-import { getAvailableParkingSpots } from "./application/get-available-parking-spots";
 import { getMyReservations } from "./application/get-my-reservations";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";

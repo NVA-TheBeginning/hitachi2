@@ -79,7 +79,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-1",
           userId: TEST_USER.id,
           carId: TEST_CAR.id,
-          parkingSpotId: spot2!.id,
+          parkingSpotId: spot2?.id,
           date: toReservationDate("2099-08-02"),
           status: ReservationStatus.RESERVED,
         },
@@ -87,7 +87,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-2",
           userId: TEST_USER.id,
           carId: TEST_CAR.id,
-          parkingSpotId: spot1!.id,
+          parkingSpotId: spot1?.id,
           date: toReservationDate("2099-08-01"),
           status: ReservationStatus.RESERVED,
         },
@@ -95,7 +95,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-3",
           userId: TEST_USER.id,
           carId: TEST_CAR.id,
-          parkingSpotId: spot1!.id,
+          parkingSpotId: spot1?.id,
           date: toReservationDate("2099-08-03"),
           status: ReservationStatus.CANCELLED,
         },
@@ -103,7 +103,7 @@ describe("parking-reservation.my-reservations", () => {
           id: "test-my-reservations-4",
           userId: OTHER_USER.id,
           carId: OTHER_CAR.id,
-          parkingSpotId: spot2!.id,
+          parkingSpotId: spot2?.id,
           date: toReservationDate("2099-08-04"),
           status: ReservationStatus.RESERVED,
         },
@@ -113,12 +113,9 @@ describe("parking-reservation.my-reservations", () => {
     const result = await call(appRouter.getMyReservations, undefined, userCtx);
 
     expect(result).toHaveLength(2);
-    expect(result.map((reservation) => reservation.id)).toEqual([
-      "test-my-reservations-2",
-      "test-my-reservations-1",
-    ]);
+    expect(result.map((reservation) => reservation.id)).toEqual(["test-my-reservations-2", "test-my-reservations-1"]);
     expect(result[0]?.car.name).toBe(TEST_CAR.name);
-    expect(result[0]?.parkingSpot.name).toBe(spot1!.name);
+    expect(result[0]?.parkingSpot.name).toBe(spot1?.name);
   });
 
   test("should delete one of my active reservations", async () => {
@@ -129,17 +126,13 @@ describe("parking-reservation.my-reservations", () => {
         id: "test-my-reservations-delete",
         userId: TEST_USER.id,
         carId: TEST_CAR.id,
-        parkingSpotId: spot!.id,
+        parkingSpotId: spot?.id,
         date: toReservationDate("2099-09-01"),
         status: ReservationStatus.RESERVED,
       },
     });
 
-    const result = await call(
-      appRouter.deleteMyReservation,
-      { reservationId: "test-my-reservations-delete" },
-      userCtx,
-    );
+    const result = await call(appRouter.deleteMyReservation, { reservationId: "test-my-reservations-delete" }, userCtx);
 
     expect(result).toEqual({ reservationId: "test-my-reservations-delete" });
 
@@ -158,7 +151,7 @@ describe("parking-reservation.my-reservations", () => {
         id: "test-my-reservations-foreign",
         userId: OTHER_USER.id,
         carId: OTHER_CAR.id,
-        parkingSpotId: spot!.id,
+        parkingSpotId: spot?.id,
         date: toReservationDate("2099-10-01"),
         status: ReservationStatus.RESERVED,
       },
