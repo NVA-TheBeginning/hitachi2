@@ -7,7 +7,7 @@ import LoginScreen from "./login-screen";
 export default async function LoginPage() {
   const session = await getServerSession();
 
-  if (session?.data?.user) {
+  if (session?.user) {
     redirect("/dashboard");
   }
 

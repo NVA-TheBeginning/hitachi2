@@ -1,11 +1,8 @@
+import { auth } from "@hitachi2/auth";
 import { headers } from "next/headers";
 
-import { authClient } from "./auth-client";
-
 export async function getServerSession() {
-  return await authClient.getSession({
-    fetchOptions: {
-      headers: await headers(),
-    },
+  return await auth.api.getSession({
+    headers: await headers(),
   });
 }

@@ -5,7 +5,7 @@ import { getServerSession } from "@/lib/auth-session";
 export default async function AccountPage() {
   const session = await getServerSession();
 
-  if (!session?.data?.user) {
+  if (!session?.user) {
     redirect("/login");
   }
 

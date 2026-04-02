@@ -7,7 +7,7 @@ import StatusContent from "./status-content";
 export default async function StatusPage() {
   const session = await getServerSession();
 
-  if (!session?.data?.user) {
+  if (!session?.user) {
     redirect("/login");
   }
 

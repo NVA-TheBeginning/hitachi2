@@ -6,8 +6,8 @@ import { QrCodeGrid } from "./qr-code-grid";
 export default async function QrCodesPage() {
   const session = await getServerSession();
 
-  if (!session?.data?.user) redirect("/login");
-  if (session.data.user.role !== UserRole.MANAGER) redirect("/dashboard");
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== UserRole.MANAGER) redirect("/dashboard");
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-6">
