@@ -1,5 +1,6 @@
 import type { IReservationRepository, ReservationActor, UserReservationSummary } from "@api/types";
 import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
+import { ReservationAlreadyCheckedInError } from "../domain/errors";
 
 const parkingSpotSummarySelect = {
   id: true,
@@ -271,17 +272,24 @@ export class PrismaReservationRepository implements IReservationRepository {
   }
 
   async checkInReservation(reservationId: string) {
-    return prisma.$transaction(async (tx) => {
-      await tx.reservation.update({
-        where: { id: reservationId },
-        data: { status: ReservationStatus.COMPLETED },
-      });
+    try {
+      return await prisma.$transaction(async (tx) => {
+        await tx.reservation.update({
+          where: { id: reservationId, status: ReservationStatus.RESERVED },
+          data: { status: ReservationStatus.COMPLETED },
+        });
 
-      return tx.checkIn.create({
-        data: { reservationId },
-        select: { checkedAt: true },
+        return tx.checkIn.create({
+          data: { reservationId },
+          select: { checkedAt: true },
+        });
       });
-    });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        throw new ReservationAlreadyCheckedInError(reservationId);
+      }
+      throw e;
+    }
   }
 
   async getNoShowStats(input: { userId?: string; startDate?: Date; endDate?: Date }) {

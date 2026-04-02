@@ -1,9 +1,9 @@
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import type { UserRole } from "@hitachi2/db";
-import prisma from "@hitachi2/db";
 import dotenv from "dotenv";
+import type { UserRole } from "../src/index";
+import prisma from "../src/index";
 
 const envPath = path.join(__dirname, "../../apps/server/.env");
 if (existsSync(envPath)) {
