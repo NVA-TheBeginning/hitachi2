@@ -26,3 +26,7 @@ export function formatDateLong(date: string | Date, locale = "fr-FR") {
     day: "numeric",
   });
 }
+
+export function normalizeDate(value: string | Date) {
+  return new Date(value).toISOString().slice(0, 10);
+}
