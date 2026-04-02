@@ -1,4 +1,4 @@
-import type { IReservationRepository, ReservationActor, UserReservationSummary } from "@api/types";
+import type { IReservationRepository, ReservingVehicle, UserReservationSummary } from "@api/types";
 import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
 import { ReservationAlreadyCheckedInError } from "../domain/errors";
 
@@ -79,7 +79,7 @@ function toUserReservationSummary(
 }
 
 export class PrismaReservationRepository implements IReservationRepository {
-  async findReservationActor(userId: string, carId?: string) {
+  async findUserCarForReservation(userId: string, carId?: string) {
     const car = await prisma.car.findFirst({
       where: {
         userId,
@@ -108,7 +108,7 @@ export class PrismaReservationRepository implements IReservationRepository {
     return reservations.map((r) => r.parkingSpotId);
   }
 
-  async releaseUncheckedReservations(date: Date): Promise<void> {
+  async markNoShowReservations(date: Date): Promise<void> {
     const { start, end } = getReservationDayRange(date);
 
     const noShowSpots = await prisma.reservation.findMany({
@@ -161,9 +161,9 @@ export class PrismaReservationRepository implements IReservationRepository {
     });
   }
 
-  async findAndCreateReservation(
+  async allocateParkingSpot(
     date: Date,
-    actor: ReservationActor,
+    vehicle: ReservingVehicle,
   ): Promise<{
     id: string;
     parkingSpot: { id: string; name: string; charger: boolean };
@@ -184,15 +184,15 @@ export class PrismaReservationRepository implements IReservationRepository {
 
           const reservedSpotIds = reservations.map((r) => r.parkingSpotId);
 
-          const spot = await findSuitableSpot(tx, reservedSpotIds, !!actor.electric);
+          const spot = await findSuitableSpot(tx, reservedSpotIds, !!vehicle.electric);
 
           if (!spot) return null;
 
           const [reservation, remainingSpots] = await Promise.all([
             tx.reservation.create({
               data: {
-                userId: actor.userId,
-                carId: actor.carId,
+                userId: vehicle.userId,
+                carId: vehicle.carId,
                 parkingSpotId: spot.id,
                 date,
                 status: ReservationStatus.RESERVED,
@@ -271,7 +271,7 @@ export class PrismaReservationRepository implements IReservationRepository {
     });
   }
 
-  async checkInReservation(reservationId: string) {
+  async confirmArrival(reservationId: string) {
     try {
       return await prisma.$transaction(async (tx) => {
         await tx.reservation.update({
@@ -325,7 +325,7 @@ export class PrismaReservationRepository implements IReservationRepository {
     };
   }
 
-  async getSlotOccupancyStats(date: Date) {
+  async getParkingLotUtilization(date: Date) {
     const { start, end } = getReservationDayRange(date);
 
     const activeStatuses = { in: [ReservationStatus.RESERVED, ReservationStatus.COMPLETED] };
@@ -413,7 +413,7 @@ export class PrismaReservationRepository implements IReservationRepository {
     return reservations.map(toUserReservationSummary);
   }
 
-  async updateReservationStatus(reservationId: string, status: ReservationStatus) {
+  async finalizeReservation(reservationId: string, status: ReservationStatus) {
     await prisma.reservation.update({
       where: { id: reservationId },
       data: { status },

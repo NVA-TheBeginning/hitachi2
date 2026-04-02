@@ -62,9 +62,9 @@ afterAll(async () => {
   await cleanupUsers(SECRETARY, EMPLOYEE);
 });
 
-describe("parking reservation router - updateReservationStatus", () => {
+describe("parking reservation router - finalizeReservation", () => {
   test("should update reservation status to COMPLETED for secretary", async () => {
-    await call(appRouter.updateReservationStatus, { reservationId, status: ReservationStatus.COMPLETED }, secretaryCtx);
+    await call(appRouter.finalizeReservation, { reservationId, status: ReservationStatus.COMPLETED }, secretaryCtx);
 
     const updated = await prisma.reservation.findUnique({
       where: { id: reservationId },
@@ -73,7 +73,7 @@ describe("parking reservation router - updateReservationStatus", () => {
   });
 
   test("should update reservation status to NO_SHOW for secretary", async () => {
-    await call(appRouter.updateReservationStatus, { reservationId, status: ReservationStatus.NO_SHOW }, secretaryCtx);
+    await call(appRouter.finalizeReservation, { reservationId, status: ReservationStatus.NO_SHOW }, secretaryCtx);
 
     const updated = await prisma.reservation.findUnique({
       where: { id: reservationId },
@@ -86,13 +86,13 @@ describe("parking reservation router - updateReservationStatus", () => {
     const managerCtx = createAuthedContext(manager);
 
     expect(
-      call(appRouter.updateReservationStatus, { reservationId, status: ReservationStatus.CANCELLED }, managerCtx),
+      call(appRouter.finalizeReservation, { reservationId, status: ReservationStatus.CANCELLED }, managerCtx),
     ).rejects.toThrow("Access denied");
   });
 
   test("should throw FORBIDDEN for employee", async () => {
     expect(
-      call(appRouter.updateReservationStatus, { reservationId, status: ReservationStatus.CANCELLED }, employeeCtx),
+      call(appRouter.finalizeReservation, { reservationId, status: ReservationStatus.CANCELLED }, employeeCtx),
     ).rejects.toThrow("Access denied");
   });
 });

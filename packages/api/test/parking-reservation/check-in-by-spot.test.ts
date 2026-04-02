@@ -60,11 +60,11 @@ async function createTodayReservationTest(overrides?: { userId?: string; carId?:
   });
 }
 
-describe("parking-reservation.checkInBySpot", () => {
+describe("parking-reservation.confirmArrivalAtSpot", () => {
   test("should check in, return checkedAt, and update DB state", async () => {
     await createTodayReservationTest();
 
-    const result = await call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext);
+    const result = await call(appRouter.confirmArrivalAtSpot, { spotId: SPOT.id }, authedContext);
 
     expect(result.checkedAt).toBeInstanceOf(Date);
 
@@ -78,7 +78,7 @@ describe("parking-reservation.checkInBySpot", () => {
   test("should throw UNAUTHORIZED when not authenticated", async () => {
     expect(
       call(
-        appRouter.checkInBySpot,
+        appRouter.confirmArrivalAtSpot,
         { spotId: SPOT.id },
         { context: { session: null, jobQueue: { send: async () => null } } },
       ),
@@ -86,13 +86,13 @@ describe("parking-reservation.checkInBySpot", () => {
   });
 
   test("should throw NOT_FOUND when spot does not exist", async () => {
-    expect(call(appRouter.checkInBySpot, { spotId: "non-existent-spot" }, authedContext)).rejects.toMatchObject({
+    expect(call(appRouter.confirmArrivalAtSpot, { spotId: "non-existent-spot" }, authedContext)).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
   });
 
   test("should throw NOT_FOUND when user has no reservation for that spot today", async () => {
-    expect(call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
+    expect(call(appRouter.confirmArrivalAtSpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
   });
@@ -100,7 +100,7 @@ describe("parking-reservation.checkInBySpot", () => {
   test("should throw NOT_FOUND when reservation belongs to another user", async () => {
     await createTodayReservationTest({ userId: USER_2.id, carId: CAR_1.id });
 
-    expect(call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
+    expect(call(appRouter.confirmArrivalAtSpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
   });
@@ -108,7 +108,7 @@ describe("parking-reservation.checkInBySpot", () => {
   test("should throw CONFLICT when reservation is already checked in", async () => {
     await createTodayReservationTest({ status: ReservationStatus.COMPLETED });
 
-    expect(call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
+    expect(call(appRouter.confirmArrivalAtSpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
       code: "CONFLICT",
     });
   });
@@ -116,9 +116,9 @@ describe("parking-reservation.checkInBySpot", () => {
   test("should throw CONFLICT on concurrent check-in (second call loses the race)", async () => {
     await createTodayReservationTest();
 
-    await call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext);
+    await call(appRouter.confirmArrivalAtSpot, { spotId: SPOT.id }, authedContext);
 
-    expect(call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
+    expect(call(appRouter.confirmArrivalAtSpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
       code: "CONFLICT",
     });
   });
