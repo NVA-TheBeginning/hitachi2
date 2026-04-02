@@ -1,0 +1,55 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  CI: true
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+  BETTER_AUTH_SECRET: supersecretkeyforcisupersecretkeyforci
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: Install Playwright
+        run: bunx playwright install chromium --with-deps
+
+      - name: Setup database
+        run: bun --bun run db:push && bun --bun run db:seed
+
+      - name: Run E2E tests
+        run: bun --bun run test:e2e

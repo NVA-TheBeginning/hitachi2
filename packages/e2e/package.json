@@ -1,0 +1,14 @@
+{
+  "name": "@hitachi2/e2e",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test:e2e": "bun run ./run-tests.ts"
+  },
+  "devDependencies": {
+    "@hitachi2/config": "workspace:*",
+    "@hitachi2/db": "workspace:*",
+    "@types/bun": "catalog:",
+    "playwright": "^1.59.1"
+  }
+}

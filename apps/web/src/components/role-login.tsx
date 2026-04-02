@@ -74,7 +74,7 @@ export default function RoleLogin({ onManualLogin }: { onManualLogin: () => void
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-10">
+    <div data-testid="quick-login" className="mx-auto w-full max-w-2xl px-4 py-10">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold">Quick Login</h1>
         <p className="text-muted-foreground mt-2 text-sm">Select a role and choose a test account</p>
@@ -105,7 +105,7 @@ export default function RoleLogin({ onManualLogin }: { onManualLogin: () => void
           </div>
 
           <div className="mt-8 text-center">
-            <Button variant="link" onClick={onManualLogin}>
+            <Button variant="link" data-testid="manual-sign-in" onClick={onManualLogin}>
               Use email & password instead
             </Button>
           </div>
