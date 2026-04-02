@@ -142,10 +142,10 @@ export function MyReservationsCard() {
       onSuccess: async () => {
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: orpc.getMyReservations.queryOptions().queryKey,
+            queryKey: orpc.getMyReservations.key(),
           }),
           queryClient.invalidateQueries({
-            queryKey: orpc.getMyAccount.queryOptions().queryKey,
+            queryKey: orpc.getMyAccount.key(),
           }),
         ]);
         toast.success("Reservation supprimee.");
