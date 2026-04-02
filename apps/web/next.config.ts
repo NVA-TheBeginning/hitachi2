@@ -1,9 +1,19 @@
 import "@hitachi2/env/web";
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
   output: "standalone",
+  compress: false,
+  turbopack: {
+    root: path.join(__dirname, "../.."),
+  },
+  experimental: {
+    turbopackFileSystemCacheForBuild: true,
+    turbopackFileSystemCacheForDev: true,
+    optimizePackageImports: ["zod"],
+  },
   async headers() {
     return [
       {

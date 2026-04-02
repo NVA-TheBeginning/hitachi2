@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import path from "node:path";
+import type { UserRole } from "@hitachi2/db";
 import dotenv from "dotenv";
-import type { UserRole } from "../generated";
 
 dotenv.config({
   path: path.resolve(import.meta.dir, "../../../apps/server/.env"),

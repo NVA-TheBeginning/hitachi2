@@ -1,4 +1,4 @@
-import type { UserRole } from "@hitachi2/db";
+import { UserRole } from "@hitachi2/db";
 import type { Session, User } from "better-auth/types";
 
 export interface TestUser {
@@ -13,10 +13,8 @@ export interface TestContext {
   context: {
     session: {
       session: Session;
-      user: Omit<User, "createdAt" | "updatedAt"> & {
-        createdAt: Date;
-        updatedAt: Date;
-        role: string | null;
+      user: User & {
+        role: UserRole;
       };
     };
     jobQueue: { send: (name: string, data: object) => Promise<string | null> };
@@ -45,7 +43,7 @@ export function createContext(user: TestUser): TestContext {
           emailVerified: user.emailVerified,
           name: user.name,
           image: null,
-          role: user.role ?? null,
+          role: user.role ?? UserRole.EMPLOYEE,
         },
       },
       jobQueue: { send: async () => null },

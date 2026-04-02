@@ -1,6 +1,6 @@
 "use client";
 
-import { getCurrentReservationDateString } from "@api/helpers";
+import { formatDateLong, getCurrentReservationDateString, normalizeDate } from "@api/helpers";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, ArrowRightIcon, ZapIcon } from "lucide-react";
 import { useState } from "react";
@@ -9,13 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useIsMobile } from "@/hooks/use-is-mobile";
-import { orpc } from "@/utils/orpc";
+import { type client, orpc } from "@/utils/orpc";
 
-type ParkingSpot = {
-  id: string;
-  name: string;
-  charger: boolean;
-};
+type ParkingSpot = NonNullable<Awaited<ReturnType<typeof client.getAllParkingSpots>>>[number];
 
 const ROW_ORDER = ["A", "B", "C", "D", "E", "F"] as const;
 type RowName = (typeof ROW_ORDER)[number];
@@ -25,19 +21,6 @@ const ALLEY_DIRECTION_BY_ROW: Partial<Record<RowName, "left-to-right" | "right-t
   C: "right-to-left",
   E: "left-to-right",
 };
-
-function formatReservationDate(date: string) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(`${date}T12:00:00`));
-}
-
-function normalizeDate(value: string | Date) {
-  return new Date(value).toISOString().slice(0, 10);
-}
 
 function getSpotRow(name: string) {
   return name.match(/^[A-Z]+/i)?.[0] ?? "?";
@@ -370,7 +353,7 @@ export function ParkingMap() {
         <CardHeader>
           <CardTitle>Plan du parking</CardTitle>
           <CardDescription>
-            {formatReservationDate(selectedDate)}
+            {formatDateLong(selectedDate)}
             {isMobile ? " · vue mobile" : " · vue desktop"}
           </CardDescription>
         </CardHeader>

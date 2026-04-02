@@ -9,7 +9,9 @@
     "baseUrl": ".",
     "paths": {
       "@api/types": ["src/types/index.ts"],
-      "@api/helpers": ["src/helpers/index.ts"]
+      "@api/types/*": ["src/types/*.ts"],
+      "@api/helpers": ["src/helpers/index.ts"],
+      "@api/helpers/*": ["src/helpers/*.ts"]
     }
   }
 }

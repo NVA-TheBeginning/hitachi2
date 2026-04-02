@@ -230,7 +230,6 @@ describe("parking-reservation.reserveParkingSpot", () => {
   test("should handle concurrent reservations — only one wins", async () => {
     const spots = await prisma.parkingSpot.findMany({ where: { available: true }, select: { id: true } });
 
-    // Leave exactly 1 spot open
     await prisma.reservation.createMany({
       data: spots.slice(0, -1).map((spot) => ({
         userId: TEST_FILLER.id,
@@ -253,7 +252,6 @@ describe("parking-reservation.reserveParkingSpot", () => {
     expect(failed).toHaveLength(1);
     expect((failed[0] as PromiseRejectedResult).reason).toMatchObject({ code: "CONFLICT" });
 
-    // Cleanup pre-filled reservations (actor.userId not covered by afterEach)
     await prisma.reservation.deleteMany({
       where: { userId: TEST_FILLER.id, date: toReservationDate(RACE_DATE) },
     });
