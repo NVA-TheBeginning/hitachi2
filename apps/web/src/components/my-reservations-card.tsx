@@ -9,21 +9,9 @@ import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-is-mobile";
-import { orpc } from "@/utils/orpc";
+import { type client, orpc } from "@/utils/orpc";
 
-type ReservationItem = {
-  id: string;
-  date: string | Date;
-  car: {
-    name: string;
-    licensePlate: string | null;
-  };
-  parkingSpot: {
-    id: string;
-    name: string;
-    charger: boolean;
-  };
-};
+type ReservationItem = NonNullable<Awaited<ReturnType<typeof client.getMyReservations>>>[number];
 
 function MobileCheckInCamera({ reservation, onClose }: { reservation: ReservationItem; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);

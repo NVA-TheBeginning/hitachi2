@@ -83,27 +83,13 @@ function ProfileCard({ account, onRefresh }: { account: NonNullable<AccountData>
     onSubmit: async ({ value }) => {
       const trimmedName = value.name.trim();
       const trimmedEmail = value.email.trim().toLowerCase();
-      const errors: string[] = [];
 
       if (trimmedName !== account.name) {
-        try {
-          await authClient.updateUser({ name: trimmedName });
-        } catch (e) {
-          errors.push(e instanceof Error ? e.message : "Erreur lors de la mise a jour du nom.");
-        }
+        await authClient.updateUser({ name: trimmedName });
       }
 
       if (trimmedEmail !== account.email) {
-        try {
-          await authClient.changeEmail({ newEmail: trimmedEmail });
-        } catch (e) {
-          errors.push(e instanceof Error ? e.message : "Erreur lors du changement d'email.");
-        }
-      }
-
-      if (errors.length > 0) {
-        toast.error(errors[0]);
-        return;
+        await authClient.changeEmail({ newEmail: trimmedEmail });
       }
 
       await onRefresh();
