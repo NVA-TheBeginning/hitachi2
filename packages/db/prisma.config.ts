@@ -11,6 +11,7 @@ if (existsSync(envPath)) {
     path: envPath,
   });
 }
+
 export default defineConfig({
   schema: path.join("prisma", "schema"),
   migrations: {

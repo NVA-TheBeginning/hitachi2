@@ -1,13 +1,16 @@
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import type { UserRole } from "@hitachi2/db";
+import prisma from "@hitachi2/db";
 import dotenv from "dotenv";
 
-dotenv.config({
-  path: path.resolve(import.meta.dir, "../../../apps/server/.env"),
-});
-
-const { default: prisma } = await import("../src/index");
+const envPath = path.join(__dirname, "../../apps/server/.env");
+if (existsSync(envPath)) {
+  dotenv.config({
+    path: envPath,
+  });
+}
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
