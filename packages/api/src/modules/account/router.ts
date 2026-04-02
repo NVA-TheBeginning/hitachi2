@@ -1,6 +1,7 @@
+import { UserRole } from "@hitachi2/db";
 import { z } from "zod";
 import { handleError } from "../../helpers/handle-error";
-import { protectedProcedure } from "../../index";
+import { protectedProcedure, secretaryProcedure } from "../../index";
 import { createMyCar } from "./application/create-my-car";
 import { deleteMyCar } from "./application/delete-my-car";
 import { getMyAccount } from "./application/get-my-account";
@@ -19,6 +20,12 @@ const carPayloadSchema = z.object({
     .regex(/^[A-Z0-9 -]+$/i, "La plaque ne peut contenir que des lettres, chiffres, espaces et tirets.")
     .transform((v) => v.trim().replace(/\s+/g, " ").toUpperCase()),
   electric: z.boolean(),
+});
+
+const updateUserSchema = z.object({
+  userId: z.string(),
+  name: z.string().trim().min(2).max(80).optional(),
+  role: z.enum(UserRole).optional(),
 });
 
 export const accountRouter = {
@@ -66,6 +73,38 @@ export const accountRouter = {
         ...input,
         userId: context.session.user.id,
       });
+    } catch (error) {
+      handleError(error);
+    }
+  }),
+
+  getAllUsers: secretaryProcedure.handler(async () => {
+    try {
+      return await repository.getAllUsers();
+    } catch (error) {
+      handleError(error);
+    }
+  }),
+
+  getUserById: secretaryProcedure.input(z.object({ userId: z.string() })).handler(async ({ input }) => {
+    try {
+      return await repository.getUserById(input.userId);
+    } catch (error) {
+      handleError(error);
+    }
+  }),
+
+  updateUser: secretaryProcedure.input(updateUserSchema).handler(async ({ input }) => {
+    try {
+      return await repository.updateUser(input);
+    } catch (error) {
+      handleError(error);
+    }
+  }),
+
+  deleteUser: secretaryProcedure.input(z.object({ userId: z.string() })).handler(async ({ input }) => {
+    try {
+      await repository.deleteUser(input.userId);
     } catch (error) {
       handleError(error);
     }

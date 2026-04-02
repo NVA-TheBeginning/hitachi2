@@ -79,6 +79,13 @@ export interface IReservationRepository {
     occupiedElectricSlots: number;
     electricOccupancyRate: number;
   }>;
+  getAllReservations(input: {
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    status?: ReservationStatus;
+  }): Promise<UserReservationSummary[]>;
+  updateReservationStatus(reservationId: string, status: ReservationStatus): Promise<void>;
 }
 
 export type UserCarSummary = {
@@ -93,6 +100,16 @@ export type UserReservationQuotaSummary = {
   reservationCount: number;
   maxReservations: number;
   remainingReservations: number;
+};
+
+export type AdminUserSummary = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  carCount: number;
+  reservationCount: number;
 };
 
 export type AccountSummary = {
@@ -121,4 +138,8 @@ export interface IAccountRepository {
     electric: boolean;
   }): Promise<UserCarSummary>;
   deleteUserCar(carId: string): Promise<void>;
+  getAllUsers(): Promise<AdminUserSummary[]>;
+  getUserById(userId: string): Promise<AccountSummary | null>;
+  updateUser(input: { userId: string; name?: string; role?: UserRole }): Promise<AccountSummary>;
+  deleteUser(userId: string): Promise<void>;
 }

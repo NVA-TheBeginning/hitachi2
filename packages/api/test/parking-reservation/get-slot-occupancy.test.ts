@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import prisma, { ReservationStatus } from "@hitachi2/db";
+import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { getCurrentReservationDateString } from "../../src/helpers";
 import { appRouter } from "../../src/routers/index";
@@ -10,10 +10,10 @@ const USER = {
   name: "SOC User 1",
   email: "test-soc-1@test.com",
   emailVerified: true,
+  role: UserRole.MANAGER,
 };
 const CAR = { id: "test-soc-car-1", userId: USER.id, electric: false };
 
-// 3 regular spots, 2 electric spots
 const SPOT_REG_1 = { id: "test-soc-spot-r1", name: "TEST-SOC-R01", charger: false, available: true };
 const SPOT_REG_2 = { id: "test-soc-spot-r2", name: "TEST-SOC-R02", charger: false, available: true };
 const SPOT_REG_3 = { id: "test-soc-spot-r3", name: "TEST-SOC-R03", charger: false, available: true };
@@ -34,7 +34,6 @@ beforeAll(async () => {
   await prisma.car.deleteMany({ where: { id: CAR.id } });
   await prisma.user.deleteMany({ where: { id: USER.id } });
 
-  // Disable all pre-existing available spots so totalSlots only reflects our test data
   const existing = await prisma.parkingSpot.findMany({
     where: { available: true },
     select: { id: true },
@@ -53,7 +52,6 @@ afterAll(async () => {
   await prisma.car.delete({ where: { id: CAR.id } });
   await prisma.user.delete({ where: { id: USER.id } });
 
-  // Restore the spots we disabled
   await prisma.parkingSpot.updateMany({ where: { id: { in: disabledSpotIds } }, data: { available: true } });
 });
 
