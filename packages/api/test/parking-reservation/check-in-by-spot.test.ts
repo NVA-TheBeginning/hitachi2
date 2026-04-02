@@ -112,4 +112,14 @@ describe("parking-reservation.checkInBySpot", () => {
       code: "CONFLICT",
     });
   });
+
+  test("should throw CONFLICT on concurrent check-in (second call loses the race)", async () => {
+    await createTodayReservationTest();
+
+    await call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext);
+
+    expect(call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+  });
 });
