@@ -22,6 +22,11 @@ type AccountData = {
   email: string;
   role: string;
   createdAt: string | Date;
+  reservationQuota: {
+    reservationCount: number;
+    maxReservations: number;
+    remainingReservations: number;
+  };
   cars: {
     id: string;
     name: string;
@@ -179,6 +184,25 @@ function ProfileCard({ account, onRefresh }: { account: AccountData; onRefresh: 
               <Input
                 id="profile-member-since"
                 value={new Date(account.createdAt).toLocaleDateString("fr-FR")}
+                disabled
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="profile-reservation-count">Reservations actives</Label>
+              <Input id="profile-reservation-count" value={account.reservationQuota.reservationCount} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-reservation-limit">Quota maximum</Label>
+              <Input id="profile-reservation-limit" value={account.reservationQuota.maxReservations} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-reservation-remaining">Reservations restantes</Label>
+              <Input
+                id="profile-reservation-remaining"
+                value={account.reservationQuota.remainingReservations}
                 disabled
               />
             </div>

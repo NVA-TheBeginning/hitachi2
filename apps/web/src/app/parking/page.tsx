@@ -1,0 +1,17 @@
+import { redirect } from "next/navigation";
+import { ParkingMap } from "@/components/parking-map";
+import { getServerSession } from "@/lib/auth-session";
+
+export default async function ParkingPage() {
+  const session = await getServerSession();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  return (
+    <div className="container mx-auto max-w-7xl px-4 py-6">
+      <ParkingMap />
+    </div>
+  );
+}
