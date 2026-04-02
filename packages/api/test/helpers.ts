@@ -16,6 +16,7 @@ export interface TestContext {
       user: Omit<User, "createdAt" | "updatedAt"> & {
         createdAt: Date;
         updatedAt: Date;
+        role: string | null;
       };
     };
     jobQueue: { send: (name: string, data: object) => Promise<string | null> };
