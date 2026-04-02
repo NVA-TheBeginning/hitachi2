@@ -354,4 +354,55 @@ export class PrismaReservationRepository implements IReservationRepository {
 
     return { reservationCount, role: user?.role ?? UserRole.EMPLOYEE };
   }
+
+  async getAllReservations(input: { userId?: string; startDate?: Date; endDate?: Date; status?: ReservationStatus }) {
+    const { userId, startDate, endDate, status } = input;
+
+    const where: Prisma.ReservationWhereInput = {
+      ...(userId && { userId }),
+      ...(status && { status }),
+      ...(startDate || endDate
+        ? {
+            date: {
+              ...(startDate ? { gte: startDate } : {}),
+              ...(endDate ? { lt: endDate } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const reservations = await prisma.reservation.findMany({
+      where,
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        car: {
+          select: {
+            id: true,
+            name: true,
+            licensePlate: true,
+            electric: true,
+          },
+        },
+        parkingSpot: {
+          select: {
+            id: true,
+            name: true,
+            charger: true,
+          },
+        },
+      },
+      orderBy: { date: "desc" },
+    });
+
+    return reservations.map(toUserReservationSummary);
+  }
+
+  async updateReservationStatus(reservationId: string, status: ReservationStatus) {
+    await prisma.reservation.update({
+      where: { id: reservationId },
+      data: { status },
+    });
+  }
 }

@@ -1,7 +1,8 @@
+import { ReservationStatus } from "@hitachi2/db";
 import { z } from "zod";
+import { toReservationDate } from "../../helpers";
 import { handleError } from "../../helpers/handle-error";
-
-import { protectedProcedure, publicProcedure } from "../../index";
+import { protectedProcedure, publicProcedure, secretaryProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
 import { deleteMyReservation } from "./application/delete-my-reservation";
@@ -44,7 +45,7 @@ export const parkingReservationRouter = {
             date: input.date,
             parkingSpotName: result.parkingSpot.name,
           })
-          .catch((err) => console.error("Failed to queue reservation email", err));
+          .catch((err: unknown) => console.error("Failed to queue reservation email", err));
 
         return result;
       } catch (error) {
@@ -98,7 +99,7 @@ export const parkingReservationRouter = {
     return repository.findAllParkingSpots();
   }),
 
-  getSlotOccupancy: protectedProcedure
+  getSlotOccupancy: secretaryProcedure
     .input(
       z
         .object({
@@ -126,4 +127,47 @@ export const parkingReservationRouter = {
         endDate: input?.endDate,
       });
     }),
+
+  getAllReservations: secretaryProcedure
+    .input(
+      z
+        .object({
+          userId: z.string().optional(),
+          startDate: reservationDateSchema.optional(),
+          endDate: reservationDateSchema.optional(),
+          status: z.enum(ReservationStatus).optional(),
+        })
+        .optional(),
+    )
+    .handler(({ input }) => {
+      const { startDate, endDate, ...rest } = input ?? {};
+      return repository.getAllReservations({
+        ...rest,
+        ...(startDate && { startDate: toReservationDate(startDate) }),
+        ...(endDate && { endDate: toReservationDate(endDate) }),
+      });
+    }),
+
+  updateReservationStatus: secretaryProcedure
+    .input(
+      z.object({
+        reservationId: z.string(),
+        status: z.enum(ReservationStatus),
+      }),
+    )
+    .handler(async ({ input }) => {
+      try {
+        await repository.updateReservationStatus(input.reservationId, input.status);
+      } catch (error) {
+        handleError(error);
+      }
+    }),
+
+  deleteReservation: secretaryProcedure.input(z.object({ reservationId: z.string() })).handler(async ({ input }) => {
+    try {
+      await repository.deleteReservation(input.reservationId);
+    } catch (error) {
+      handleError(error);
+    }
+  }),
 };
