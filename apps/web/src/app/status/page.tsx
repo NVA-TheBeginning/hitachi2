@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 
-import { getServerSession } from "@/lib/auth-session";
+import { client } from "@/utils/orpc";
 
 import StatusContent from "./status-content";
 
-export default async function StatusPage() {
-  const session = await getServerSession();
+export const dynamic = "force-dynamic";
 
-  if (!session?.data?.user) {
+export default async function StatusPage() {
+  const session = await client.getSession();
+
+  if (!session?.user) {
     redirect("/login");
   }
 

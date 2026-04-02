@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "@/lib/auth-session";
 import { UserRole } from "@/lib/enum";
+import { client } from "@/utils/orpc";
 import { StatisticsCards } from "./components/StatisticsCards";
 
-export default async function StatisticsPage() {
-  const session = await getServerSession();
+export const dynamic = "force-dynamic";
 
-  if (!session?.data?.user) redirect("/login");
-  if (session.data.user.role !== UserRole.MANAGER) redirect("/dashboard");
+export default async function StatisticsPage() {
+  const session = await client.getSession();
+
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== UserRole.MANAGER) redirect("/dashboard");
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-6">

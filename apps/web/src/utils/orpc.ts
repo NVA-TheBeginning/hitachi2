@@ -7,6 +7,10 @@ import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+declare global {
+  var $orpcClient: AppRouterClient | undefined;
+}
+
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
@@ -21,23 +25,22 @@ export const queryClient = new QueryClient({
 });
 
 export const link = new RPCLink({
-  url: `${env.NEXT_PUBLIC_SERVER_URL}/rpc`,
+  url: () => {
+    if (typeof window === "undefined") {
+      throw new Error(
+        "RPCLink should not be used on the server. Use the server client from lib/orpc.server.ts instead.",
+      );
+    }
+    return `${env.NEXT_PUBLIC_SERVER_URL}/rpc`;
+  },
   fetch(url, options) {
     return fetch(url, {
       ...options,
       credentials: "include",
     });
   },
-  headers: async () => {
-    if (typeof window !== "undefined") {
-      return {};
-    }
-
-    const { headers } = await import("next/headers");
-    return Object.fromEntries(await headers());
-  },
 });
 
-export const client: AppRouterClient = createORPCClient(link);
+export const client: AppRouterClient = globalThis.$orpcClient ?? createORPCClient(link);
 
 export const orpc = createTanstackQueryUtils(client);

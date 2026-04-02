@@ -18,6 +18,9 @@ export const appRouter = {
   }),
   ...accountRouter,
   ...parkingReservationRouter,
+  getSession: publicProcedure.handler(({ context }) => {
+    return context.session;
+  }),
   privateData: protectedProcedure.handler(({ context }) => {
     return {
       message: "This is private",

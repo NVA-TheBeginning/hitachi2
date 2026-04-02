@@ -2,7 +2,7 @@ import fastifyCors from "@fastify/cors";
 import { createContext } from "@hitachi2/api/context";
 import { appRouter } from "@hitachi2/api/routers/index";
 import { auth } from "@hitachi2/auth";
-import { env } from "@hitachi2/env/server";
+import { corsOrigins } from "@hitachi2/env/server";
 import { OpenAPIHandler } from "@orpc/openapi/fastify";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
@@ -13,7 +13,7 @@ import { boss } from "./jobs/boss";
 import { registerWorkers } from "./jobs/index";
 
 const baseCorsConfig = {
-  origin: env.CORS_ORIGIN,
+  origin: corsOrigins,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,

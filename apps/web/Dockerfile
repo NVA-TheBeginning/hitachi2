@@ -16,17 +16,17 @@ RUN bun ci --ignore-scripts
 
 COPY --from=pruner /app/out/full/ .
 
-ENV DATABASE_URL="postgresql://postgres:password@db:5432/hitachi2"
+ENV DATABASE_URL="postgresql://postgres:password@localhost:5432/hitachi2"
 RUN cd packages/db && bunx prisma generate --schema=prisma/schema
 
 FROM oven/bun:1-slim AS builder
 WORKDIR /app
 
 COPY --from=installer /app/ .
-COPY --from=installer /app/packages/db/prisma ./packages/db/prisma
 
 ARG NEXT_PUBLIC_SERVER_URL
-ENV NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL:-http://localhost:3000}
+ENV NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL
+ENV SKIP_ENV_VALIDATION=true
 
 RUN bun run build --filter=web
 

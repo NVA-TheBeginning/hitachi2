@@ -1,5 +1,5 @@
 import prisma, { UserRole } from "@hitachi2/db";
-import { env } from "@hitachi2/env/server";
+import { corsOrigins, env } from "@hitachi2/env/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
@@ -7,17 +7,23 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-
-  trustedOrigins: [env.CORS_ORIGIN],
+  baseURL: env.BETTER_AUTH_URL,
+  secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: corsOrigins,
   emailAndPassword: {
     enabled: true,
   },
   advanced: {
     defaultCookieAttributes: {
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      secure: env.NODE_ENV === "production",
       httpOnly: true,
     },
+    crossSubDomainCookies: {
+      enabled: env.NODE_ENV === "production",
+      domain: env.API_DOMAIN,
+    },
+    useSecureCookies: env.NODE_ENV === "production",
   },
   user: {
     additionalFields: {
