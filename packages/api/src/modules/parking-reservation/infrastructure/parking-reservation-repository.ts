@@ -1,5 +1,4 @@
-import { getReservationDayRange } from "@api/helpers";
-import type { IReservationRepository, ReservationActor } from "@api/types";
+import type { IReservationRepository, ReservationActor, UserReservationSummary } from "@api/types";
 import prisma, { Prisma, ReservationStatus, UserRole } from "@hitachi2/db";
 
 const parkingSpotSummarySelect = {
@@ -8,11 +7,52 @@ const parkingSpotSummarySelect = {
   charger: true,
 } as const;
 
+const userReservationSelect = {
+  id: true,
+  date: true,
+  status: true,
+  car: {
+    select: {
+      id: true,
+      name: true,
+      licensePlate: true,
+      electric: true,
+    },
+  },
+  parkingSpot: {
+    select: parkingSpotSummarySelect,
+  },
+} as const;
+
+function getReservationDayRange(date: Date) {
+  const start = new Date(date);
+  const end = new Date(date);
+  end.setUTCDate(end.getUTCDate() + 1);
+
+  return { start, end };
+}
+
+function calculateRate(value: number, total: number): number {
+  return total === 0 ? 0 : (value / total) * 100;
+}
+
 function buildAvailableSpotWhere(reservedSpotIds: string[], charger?: boolean) {
   return {
     available: true,
     ...(typeof charger === "boolean" ? { charger } : {}),
     ...(reservedSpotIds.length > 0 ? { id: { notIn: reservedSpotIds } } : {}),
+  };
+}
+
+function toUserReservationSummary(
+  reservation: Prisma.ReservationGetPayload<{ select: typeof userReservationSelect }>,
+): UserReservationSummary {
+  return {
+    id: reservation.id,
+    date: reservation.date,
+    status: reservation.status,
+    car: reservation.car,
+    parkingSpot: reservation.parkingSpot,
   };
 }
 
@@ -99,7 +139,14 @@ export class PrismaReservationRepository implements IReservationRepository {
     });
   }
 
-  async findAndCreateReservation(date: Date, actor: ReservationActor) {
+  async findAndCreateReservation(
+    date: Date,
+    actor: ReservationActor,
+  ): Promise<{
+    id: string;
+    parkingSpot: { id: string; name: string; charger: boolean };
+    remainingSpots: number;
+  } | null> {
     const { start, end } = getReservationDayRange(date);
 
     try {
@@ -191,31 +238,10 @@ export class PrismaReservationRepository implements IReservationRepository {
         status: ReservationStatus.RESERVED,
       },
       orderBy: [{ date: "asc" }, { parkingSpot: { name: "asc" } }],
-      select: {
-        id: true,
-        date: true,
-        status: true,
-        car: {
-          select: {
-            id: true,
-            name: true,
-            licensePlate: true,
-            electric: true,
-          },
-        },
-        parkingSpot: {
-          select: parkingSpotSummarySelect,
-        },
-      },
+      select: userReservationSelect,
     });
 
-    return reservations.map((r) => ({
-      id: r.id,
-      date: r.date,
-      status: r.status,
-      car: r.car,
-      parkingSpot: r.parkingSpot,
-    }));
+    return reservations.map(toUserReservationSummary);
   }
 
   async findReservationById(reservationId: string) {
@@ -250,6 +276,72 @@ export class PrismaReservationRepository implements IReservationRepository {
         select: { checkedAt: true },
       });
     });
+  }
+
+  async getNoShowStats(input: { userId?: string; startDate?: Date; endDate?: Date }) {
+    const { userId, startDate, endDate } = input;
+
+    const commonWhere = {
+      ...(userId ? { userId } : {}),
+      ...(startDate || endDate
+        ? {
+            date: {
+              ...(startDate ? { gte: startDate } : {}),
+              ...(endDate ? { lt: endDate } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const grouped = await prisma.reservation.groupBy({
+      by: ["status"],
+      where: { ...commonWhere, status: { in: [ReservationStatus.NO_SHOW, ReservationStatus.COMPLETED] } },
+      _count: { _all: true },
+    });
+
+    const noShowCount = grouped.find((g) => g.status === ReservationStatus.NO_SHOW)?._count._all ?? 0;
+    const completedCount = grouped.find((g) => g.status === ReservationStatus.COMPLETED)?._count._all ?? 0;
+    const totalReservations = noShowCount + completedCount;
+
+    return {
+      totalReservations,
+      noShowCount,
+      completedCount,
+      rate: calculateRate(noShowCount, totalReservations),
+    };
+  }
+
+  async getSlotOccupancyStats(date: Date) {
+    const { start, end } = getReservationDayRange(date);
+
+    const activeStatuses = { in: [ReservationStatus.RESERVED, ReservationStatus.COMPLETED] };
+    const dateRange = { gte: start, lt: end };
+
+    const [spotGroups, activeReservations] = await Promise.all([
+      prisma.parkingSpot.groupBy({
+        by: ["charger"],
+        where: { available: true },
+        _count: { _all: true },
+      }),
+      prisma.reservation.findMany({
+        where: { date: dateRange, status: activeStatuses, parkingSpot: { available: true } },
+        select: { parkingSpot: { select: { charger: true } } },
+      }),
+    ]);
+
+    const totalSlots = spotGroups.reduce((sum, g) => sum + g._count._all, 0);
+    const totalElectricSlots = spotGroups.find((g) => g.charger)?._count._all ?? 0;
+    const occupiedSlots = activeReservations.length;
+    const occupiedElectricSlots = activeReservations.filter((r) => r.parkingSpot.charger).length;
+
+    return {
+      totalSlots,
+      occupiedSlots,
+      occupancyRate: calculateRate(occupiedSlots, totalSlots),
+      totalElectricSlots,
+      occupiedElectricSlots,
+      electricOccupancyRate: calculateRate(occupiedElectricSlots, totalElectricSlots),
+    };
   }
 
   async getUserReservations(userId: string) {

@@ -8,13 +8,15 @@ import Loader from "@/components/loader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { type client, orpc } from "@/utils/orpc";
 
 type ParkingSpot = NonNullable<Awaited<ReturnType<typeof client.getAllParkingSpots>>>[number];
 
 const ROW_ORDER = ["A", "B", "C", "D", "E", "F"] as const;
+type RowName = (typeof ROW_ORDER)[number];
 const ROWS_WITH_ALLEY_AFTER = new Set(["A", "C", "E"]);
-const ALLEY_DIRECTION_BY_ROW: Partial<Record<(typeof ROW_ORDER)[number], "left-to-right" | "right-to-left">> = {
+const ALLEY_DIRECTION_BY_ROW: Partial<Record<RowName, "left-to-right" | "right-to-left">> = {
   A: "left-to-right",
   C: "right-to-left",
   E: "left-to-right",
@@ -78,9 +80,158 @@ function getSpotStatus(spotId: string, availableSpotIds: Set<string>, myReserved
   return "reserved";
 }
 
+function DesktopParkingPlan({
+  orderedRows,
+  availableSpotIds,
+  myReservedSpotIds,
+}: {
+  orderedRows: ReadonlyArray<readonly [RowName, ParkingSpot[]]>;
+  availableSpotIds: Set<string>;
+  myReservedSpotIds: Set<string>;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <div className="min-w-[720px] rounded-3xl border bg-muted/20 p-3 md:p-4">
+        <div className="mb-4 flex justify-start">
+          <div className="rounded-full border bg-background px-3 py-1.5 text-[10px] font-medium tracking-[0.3em] uppercase">
+            Entree
+          </div>
+        </div>
+
+        <div className="space-y-2.5">
+          {orderedRows.map(([row, spots]) => {
+            return (
+              <div key={row} className="space-y-2.5">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 md:gap-4">
+                  <div className="w-5 text-xs font-semibold text-muted-foreground">{row}</div>
+                  <div className="grid grid-cols-10 gap-1.5">
+                    {spots.map((spot) => (
+                      <ParkingSpotTile
+                        key={spot.id}
+                        spot={spot}
+                        status={getSpotStatus(spot.id, availableSpotIds, myReservedSpotIds)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {ROWS_WITH_ALLEY_AFTER.has(row) ? (
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 md:gap-4">
+                    <div className="w-5" />
+                    <div className="flex h-10 items-center rounded-xl border border-dashed bg-background/70 px-3">
+                      <AlleyDirection direction={ALLEY_DIRECTION_BY_ROW[row] ?? "left-to-right"} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <div className="rounded-full border bg-background px-3 py-1.5 text-[10px] font-medium tracking-[0.3em] uppercase">
+            Sortie
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileRowGroup({
+  row,
+  spots,
+  availableSpotIds,
+  myReservedSpotIds,
+}: {
+  row: RowName;
+  spots: ParkingSpot[];
+  availableSpotIds: Set<string>;
+  myReservedSpotIds: Set<string>;
+}) {
+  const firstHalf = spots.slice(0, 5);
+  const secondHalf = spots.slice(5);
+
+  return (
+    <div className="rounded-2xl border bg-background/80 p-3">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-semibold">Rangee {row}</span>
+        <span className="text-xs text-muted-foreground">{spots.length} places</span>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-5 gap-1.5">
+          {firstHalf.map((spot) => (
+            <ParkingSpotTile
+              key={spot.id}
+              spot={spot}
+              status={getSpotStatus(spot.id, availableSpotIds, myReservedSpotIds)}
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-5 gap-1.5">
+          {secondHalf.map((spot) => (
+            <ParkingSpotTile
+              key={spot.id}
+              spot={spot}
+              status={getSpotStatus(spot.id, availableSpotIds, myReservedSpotIds)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileParkingPlan({
+  orderedRows,
+  availableSpotIds,
+  myReservedSpotIds,
+}: {
+  orderedRows: ReadonlyArray<readonly [RowName, ParkingSpot[]]>;
+  availableSpotIds: Set<string>;
+  myReservedSpotIds: Set<string>;
+}) {
+  return (
+    <div className="rounded-3xl border bg-muted/20 p-3">
+      <div className="mb-3 flex justify-start">
+        <div className="rounded-full border bg-background px-3 py-1.5 text-[10px] font-medium tracking-[0.25em] uppercase">
+          Entree
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {orderedRows.map(([row, spots]) => (
+          <div key={row} className="space-y-3">
+            <MobileRowGroup
+              row={row}
+              spots={spots}
+              availableSpotIds={availableSpotIds}
+              myReservedSpotIds={myReservedSpotIds}
+            />
+
+            {ROWS_WITH_ALLEY_AFTER.has(row) ? (
+              <div className="flex h-9 items-center rounded-xl border border-dashed bg-background/70 px-3">
+                <AlleyDirection direction={ALLEY_DIRECTION_BY_ROW[row] ?? "left-to-right"} />
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 flex justify-end">
+        <div className="rounded-full border bg-background px-3 py-1.5 text-[10px] font-medium tracking-[0.25em] uppercase">
+          Sortie
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ParkingMap() {
   const today = getCurrentReservationDateString();
   const [selectedDate, setSelectedDate] = useState(today);
+  const isMobile = useIsMobile();
 
   const allSpotsQuery = useQuery(orpc.getAllParkingSpots.queryOptions());
   const availableSpotsQuery = useQuery(orpc.getAvailableParkingSpots.queryOptions({ date: selectedDate }));
@@ -201,54 +352,25 @@ export function ParkingMap() {
       <Card>
         <CardHeader>
           <CardTitle>Plan du parking</CardTitle>
-          <CardDescription>{formatDateLong(selectedDate)}</CardDescription>
+          <CardDescription>
+            {formatDateLong(selectedDate)}
+            {isMobile ? " · vue mobile" : " · vue desktop"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <div className="min-w-[720px] rounded-3xl border bg-muted/20 p-3 md:p-4">
-              <div className="mb-4 flex justify-start">
-                <div className="rounded-full border bg-background px-3 py-1.5 text-[10px] font-medium tracking-[0.3em] uppercase">
-                  Entree
-                </div>
-              </div>
-
-              <div className="space-y-2.5">
-                {orderedRows.map(([row, spots]) => {
-                  return (
-                    <div key={row} className="space-y-2.5">
-                      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 md:gap-4">
-                        <div className="w-5 text-xs font-semibold text-muted-foreground">{row}</div>
-                        <div className="grid grid-cols-10 gap-1.5">
-                          {spots.map((spot) => (
-                            <ParkingSpotTile
-                              key={spot.id}
-                              spot={spot}
-                              status={getSpotStatus(spot.id, availableSpotIds, myReservedSpotIds)}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      {ROWS_WITH_ALLEY_AFTER.has(row) ? (
-                        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 md:gap-4">
-                          <div className="w-5" />
-                          <div className="flex h-10 items-center rounded-xl border border-dashed bg-background/70 px-3">
-                            <AlleyDirection direction={ALLEY_DIRECTION_BY_ROW[row] ?? "left-to-right"} />
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <div className="rounded-full border bg-background px-3 py-1.5 text-[10px] font-medium tracking-[0.3em] uppercase">
-                  Sortie
-                </div>
-              </div>
-            </div>
-          </div>
+          {isMobile ? (
+            <MobileParkingPlan
+              orderedRows={orderedRows}
+              availableSpotIds={availableSpotIds}
+              myReservedSpotIds={myReservedSpotIds}
+            />
+          ) : (
+            <DesktopParkingPlan
+              orderedRows={orderedRows}
+              availableSpotIds={availableSpotIds}
+              myReservedSpotIds={myReservedSpotIds}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
