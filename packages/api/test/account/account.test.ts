@@ -220,4 +220,40 @@ describe("account router", () => {
       code: "CONFLICT",
     });
   });
+
+  test("should allow deletion when the car is linked only to past reservations", async () => {
+    const parkingSpot = await prisma.parkingSpot.findFirstOrThrow({
+      where: { available: true },
+      select: { id: true },
+    });
+
+    const created = await prisma.car.create({
+      data: {
+        userId: TEST_USER.id,
+        name: "Voiture historisee",
+        licensePlate: "AC-005-EE",
+        electric: false,
+      },
+    });
+
+    await prisma.reservation.create({
+      data: {
+        userId: TEST_USER.id,
+        carId: created.id,
+        parkingSpotId: parkingSpot.id,
+        date: toReservationDate("2099-10-01"),
+        status: ReservationStatus.NO_SHOW,
+      },
+    });
+
+    const result = await call(appRouter.deleteMyCar, { carId: created.id }, accountCtx);
+
+    expect(result).toEqual({
+      carId: created.id,
+      deleted: true,
+    });
+
+    const deletedCar = await prisma.car.findUnique({ where: { id: created.id } });
+    expect(deletedCar).toBeNull();
+  });
 });

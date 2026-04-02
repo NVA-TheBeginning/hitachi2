@@ -21,9 +21,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  applicationName: "hitachi2",
-  title: "hitachi2",
-  description: "hitachi2",
+  applicationName: "Hitachi2 Parking",
+  title: "Hitachi2 Parking",
+  description: "Reservation, check-in et suivi des places de parking.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "hitachi2",
+    title: "Hitachi2 Parking",
   },
 };
 

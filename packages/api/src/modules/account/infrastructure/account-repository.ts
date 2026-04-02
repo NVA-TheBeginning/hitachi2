@@ -10,7 +10,11 @@ const userCarSelect = {
   electric: true,
   _count: {
     select: {
-      reservations: true,
+      reservations: {
+        where: {
+          status: ReservationStatus.RESERVED,
+        },
+      },
     },
   },
 } as const;
@@ -133,8 +137,19 @@ export class PrismaAccountRepository implements IAccountRepository {
   }
 
   async deleteUserCar(carId: string) {
-    await prisma.car.delete({
-      where: { id: carId },
+    await prisma.$transaction(async (tx) => {
+      await tx.reservation.deleteMany({
+        where: {
+          carId,
+          status: {
+            not: ReservationStatus.RESERVED,
+          },
+        },
+      });
+
+      await tx.car.delete({
+        where: { id: carId },
+      });
     });
   }
 

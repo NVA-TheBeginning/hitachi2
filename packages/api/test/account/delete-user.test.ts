@@ -12,6 +12,8 @@ const EMPLOYEE = createEmployee({ id: "test-delete-user-employee" });
 const secretaryCtx = createAuthedContext(SECRETARY);
 const employeeCtx = createAuthedContext(EMPLOYEE);
 const managerCtx = createAuthedContext(MANAGER);
+const createdUserIdsForCleanup: string[] = [];
+const createdSpotIdsForCleanup: string[] = [];
 
 beforeAll(async () => {
   await prisma.user.deleteMany({
@@ -21,8 +23,14 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (createdSpotIdsForCleanup.length > 0) {
+    await prisma.parkingSpot.deleteMany({
+      where: { id: { in: createdSpotIdsForCleanup } },
+    });
+  }
+
   await prisma.user.deleteMany({
-    where: { id: { in: [SECRETARY.id, MANAGER.id, EMPLOYEE.id] } },
+    where: { id: { in: [SECRETARY.id, MANAGER.id, EMPLOYEE.id, ...createdUserIdsForCleanup] } },
   });
 });
 
@@ -39,6 +47,7 @@ describe("account router - deleteUser", () => {
   test("should throw FORBIDDEN for manager", async () => {
     const uniqueId = Date.now().toString();
     const victimId = `test-delete-user-victim-2-${uniqueId}`;
+    createdUserIdsForCleanup.push(victimId);
     await prisma.user.create({
       data: {
         id: victimId,
@@ -92,6 +101,7 @@ describe("account router - deleteUser", () => {
     const carId = `test-delete-car-4-${uniqueId}`;
     const reservationId = `test-delete-reservation-4-${uniqueId}`;
     const spotId = `test-delete-spot-4-${uniqueId}`;
+    createdSpotIdsForCleanup.push(spotId);
 
     await prisma.parkingSpot.create({
       data: { id: spotId, name: `DEL-SPOT-04-${uniqueId}`, charger: false, available: true },

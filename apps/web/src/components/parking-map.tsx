@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDateLong, getCurrentReservationDateString, normalizeDate } from "@api/helpers";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, ArrowRightIcon, ZapIcon } from "lucide-react";
 import { useState } from "react";
 import Loader from "@/components/loader";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useIsMobile } from "@/hooks/use-is-mobile";
-import { type client, orpc } from "@/utils/orpc";
+import { client, orpc } from "@/utils/orpc";
 
 type ParkingSpot = NonNullable<Awaited<ReturnType<typeof client.getAllParkingSpots>>>[number];
 
@@ -234,10 +234,14 @@ export function ParkingMap() {
   const isMobile = useIsMobile();
 
   const allSpotsQuery = useQuery(orpc.getAllParkingSpots.queryOptions());
-  const availableSpotsQuery = useQuery(orpc.getAvailableParkingSpots.queryOptions({ date: selectedDate }));
+  const availableSpotsQuery = useQuery({
+    queryKey: ["parking-available-spots", selectedDate],
+    queryFn: () => client.getAvailableParkingSpots({ date: selectedDate }),
+    placeholderData: keepPreviousData,
+  });
   const myReservationsQuery = useQuery(orpc.getMyReservations.queryOptions());
 
-  if (allSpotsQuery.isLoading || availableSpotsQuery.isLoading || myReservationsQuery.isLoading) {
+  if (!allSpotsQuery.data || !availableSpotsQuery.data || !myReservationsQuery.data) {
     return (
       <Card>
         <CardHeader>
@@ -293,12 +297,6 @@ export function ParkingMap() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Parking</CardTitle>
-          <CardDescription>
-            Visualise les places libres, reservees et ta reservation pour une date donnee.
-          </CardDescription>
-        </CardHeader>
         <CardContent className="grid gap-6">
           <div className="max-w-xs space-y-2">
             <Label htmlFor="parking-date">Date</Label>
@@ -327,35 +325,13 @@ export function ParkingMap() {
               </p>
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full border-2 border-sky-500 bg-sky-500/5" />
-              <span>Libre</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full border-2 border-black bg-zinc-950/[0.03] dark:border-white dark:bg-white/5" />
-              <span>Deja reservee</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full border-2 border-emerald-500 bg-emerald-500/10" />
-              <span>Reservee par toi</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ZapIcon className="size-4" />
-              <span>Place electrique</span>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Plan du parking</CardTitle>
-          <CardDescription>
-            {formatDateLong(selectedDate)}
-            {isMobile ? " · vue mobile" : " · vue desktop"}
-          </CardDescription>
+          <CardDescription>{formatDateLong(selectedDate)}</CardDescription>
         </CardHeader>
         <CardContent>
           {isMobile ? (

@@ -393,8 +393,8 @@ function CarItem({
         <CardTitle>{car.name}</CardTitle>
         <CardDescription>
           {car.reservationCount > 0
-            ? `${car.reservationCount} reservation(s) liee(s), suppression verrouillee.`
-            : "Aucune reservation liee."}
+            ? `${car.reservationCount} reservation(s) active(s), suppression verrouillee.`
+            : "Aucune reservation active liee."}
         </CardDescription>
       </CardHeader>
       <CardContent>
