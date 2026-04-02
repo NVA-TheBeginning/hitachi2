@@ -2,10 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "hitachi2",
-    short_name: "hitachi2",
-    description: "hitachi2",
+    id: "/",
+    name: "Hitachi2 Parking",
+    short_name: "Hitachi2",
+    description: "Reservation, check-in et suivi des places de parking.",
     start_url: "/",
+    scope: "/",
+    lang: "fr",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#000000",
@@ -25,6 +28,23 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
+      },
+    ],
+    shortcuts: [
+      {
+        name: "Parking",
+        short_name: "Parking",
+        url: "/parking",
+      },
+      {
+        name: "Dashboard",
+        short_name: "Dashboard",
+        url: "/dashboard",
+      },
+      {
+        name: "Mon compte",
+        short_name: "Compte",
+        url: "/account",
       },
     ],
   };
