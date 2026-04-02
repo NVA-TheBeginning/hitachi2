@@ -8,23 +8,6 @@ const parkingSpotSummarySelect = {
   charger: true,
 } as const;
 
-const userReservationSelect = {
-  id: true,
-  date: true,
-  status: true,
-  car: {
-    select: {
-      id: true,
-      name: true,
-      licensePlate: true,
-      electric: true,
-    },
-  },
-  parkingSpot: {
-    select: parkingSpotSummarySelect,
-  },
-} as const;
-
 function buildAvailableSpotWhere(reservedSpotIds: string[], charger?: boolean) {
   return {
     available: true,
@@ -116,14 +99,7 @@ export class PrismaReservationRepository implements IReservationRepository {
     });
   }
 
-  async findAndCreateReservation(
-    date: Date,
-    actor: ReservationActor,
-  ): Promise<{
-    id: string;
-    parkingSpot: { id: string; name: string; charger: boolean };
-    remainingSpots: number;
-  } | null> {
+  async findAndCreateReservation(date: Date, actor: ReservationActor) {
     const { start, end } = getReservationDayRange(date);
 
     try {
@@ -215,7 +191,22 @@ export class PrismaReservationRepository implements IReservationRepository {
         status: ReservationStatus.RESERVED,
       },
       orderBy: [{ date: "asc" }, { parkingSpot: { name: "asc" } }],
-      select: userReservationSelect,
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        car: {
+          select: {
+            id: true,
+            name: true,
+            licensePlate: true,
+            electric: true,
+          },
+        },
+        parkingSpot: {
+          select: parkingSpotSummarySelect,
+        },
+      },
     });
 
     return reservations.map((r) => ({
