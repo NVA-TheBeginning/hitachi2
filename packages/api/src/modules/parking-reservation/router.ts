@@ -38,7 +38,7 @@ export const parkingReservationRouter = {
         });
 
         context.jobQueue
-          .send(QUEUE_NAMES.SEND_EMAIL, {
+          ?.send(QUEUE_NAMES.SEND_EMAIL, {
             to: context.session.user.email,
             subject: "Reservation confirmed",
             reservationId: result.reservationId,

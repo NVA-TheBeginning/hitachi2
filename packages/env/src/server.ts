@@ -9,9 +9,14 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
     CORS_ORIGIN: z.string().min(1).default("http://localhost:3001"),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    API_DOMAIN: z.string().default(".jayllyz.fr"),
     USESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.email().default("noreply@yourdomain.com"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
 });
+
+export const corsOrigins = env.CORS_ORIGIN.split(",")
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);

@@ -16,7 +16,18 @@ RUN bun ci --ignore-scripts
 
 COPY --from=pruner /app/out/full/ .
 
-ENV DATABASE_URL="postgresql://postgres:password@db:5432/hitachi2"
+ARG BETTER_AUTH_SECRET
+ARG BETTER_AUTH_URL
+ARG CORS_ORIGIN
+ARG API_DOMAIN
+ARG DATABASE_URL
+
+ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+ENV BETTER_AUTH_URL=${BETTER_AUTH_URL}
+ENV CORS_ORIGIN=${CORS_ORIGIN}
+ENV API_DOMAIN=${API_DOMAIN}
+ENV DATABASE_URL=${DATABASE_URL:-postgresql://postgres:password@db:5432/hitachi2}
+
 RUN cd packages/db && bunx prisma generate --schema=prisma/schema
 
 WORKDIR /app/apps/server
