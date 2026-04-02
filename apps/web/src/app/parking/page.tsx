@@ -5,7 +5,7 @@ import { getServerSession } from "@/lib/auth-session";
 export default async function ParkingPage() {
   const session = await getServerSession();
 
-  if (!session?.user) {
+  if (!session?.data?.user) {
     redirect("/login");
   }
 

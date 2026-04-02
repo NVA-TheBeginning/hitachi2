@@ -6,7 +6,7 @@ import { CheckInContent } from "./check-in-content";
 export default async function CheckInPage({ params }: { params: Promise<{ spotId: string }> }) {
   const [session, { spotId }] = await Promise.all([getServerSession(), params]);
 
-  if (!session?.user) {
+  if (!session?.data?.user) {
     redirect(`/login?redirect=/checkin/${spotId}`);
   }
 

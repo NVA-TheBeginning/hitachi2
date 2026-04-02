@@ -6,7 +6,6 @@ export async function getServerSession() {
   return await authClient.getSession({
     fetchOptions: {
       headers: await headers(),
-      throw: true,
     },
   });
 }

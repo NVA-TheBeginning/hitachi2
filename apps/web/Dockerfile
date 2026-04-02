@@ -25,7 +25,6 @@ WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=installer /app/packages/db/prisma ./packages/db/prisma
 
-ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_SERVER_URL
 ENV NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL:-http://localhost:3000}
 
@@ -36,20 +35,16 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN groupadd --system --gid 1001 nodejs && \
   useradd --system --uid 1001 --gid nodejs nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
 
 USER nextjs
 
 EXPOSE 3001
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD bun --eval "fetch('http://localhost:3001').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 ENV HOSTNAME=0.0.0.0
 CMD ["bun", "run", "apps/web/server.js"]
