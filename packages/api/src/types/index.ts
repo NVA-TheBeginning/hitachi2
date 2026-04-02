@@ -66,6 +66,19 @@ export interface IReservationRepository {
   findAllParkingSpots(): Promise<ParkingSpotSummary[]>;
   checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
   getUserReservations(userId: string): Promise<{ reservationCount: number; role: UserRole }>;
+  getNoShowStats(input: {
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{ totalReservations: number; noShowCount: number; completedCount: number; rate: number }>;
+  getSlotOccupancyStats(date: Date): Promise<{
+    totalSlots: number;
+    occupiedSlots: number;
+    occupancyRate: number;
+    totalElectricSlots: number;
+    occupiedElectricSlots: number;
+    electricOccupancyRate: number;
+  }>;
 }
 
 export type UserCarSummary = {

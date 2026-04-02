@@ -6,6 +6,8 @@ import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
 import { deleteMyReservation } from "./application/delete-my-reservation";
 import { getMyReservations } from "./application/get-my-reservations";
+import { getNoShowRate } from "./application/get-no-show-rate";
+import { getSlotOccupancy } from "./application/get-slot-occupancy";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import { PrismaReservationRepository } from "./infrastructure/parking-reservation-repository";
@@ -95,4 +97,33 @@ export const parkingReservationRouter = {
   getAllParkingSpots: protectedProcedure.handler(() => {
     return repository.findAllParkingSpots();
   }),
+
+  getSlotOccupancy: protectedProcedure
+    .input(
+      z
+        .object({
+          date: reservationDateSchema.optional(),
+        })
+        .optional(),
+    )
+    .handler(({ input }) => {
+      return getSlotOccupancy(repository, { date: input?.date });
+    }),
+
+  getNoShowRate: protectedProcedure
+    .input(
+      z
+        .object({
+          startDate: reservationDateSchema.optional(),
+          endDate: reservationDateSchema.optional(),
+        })
+        .optional(),
+    )
+    .handler(({ input, context }) => {
+      return getNoShowRate(repository, {
+        userId: context.session.user.id,
+        startDate: input?.startDate,
+        endDate: input?.endDate,
+      });
+    }),
 };
