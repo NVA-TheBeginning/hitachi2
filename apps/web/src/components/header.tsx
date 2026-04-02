@@ -47,7 +47,7 @@ export default function Header() {
                 <span>{label}</span>
                 <span
                   className={cn(
-                    "absolute bottom-0 left-0 h-[2px] bg-primary transition-all duration-200",
+                    "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-200",
                     isActive ? "w-full" : "w-0",
                   )}
                 />
