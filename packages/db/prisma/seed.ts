@@ -1,16 +1,10 @@
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
-import { existsSync } from "node:fs";
-import path from "node:path";
-import dotenv from "dotenv";
-import type { UserRole } from "../src/index";
-import prisma from "../src/index";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "./generated/client";
+import type { UserRole } from "./generated/enums";
 
-const envPath = path.join(__dirname, "../../apps/server/.env");
-if (existsSync(envPath)) {
-  dotenv.config({
-    path: envPath,
-  });
-}
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
+const prisma = new PrismaClient({ adapter });
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");

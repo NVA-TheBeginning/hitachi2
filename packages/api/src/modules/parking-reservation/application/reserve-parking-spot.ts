@@ -1,6 +1,6 @@
 import { toReservationDate } from "@api/helpers";
 import type { IReservationRepository } from "@api/types";
-import { getMaxReservationsForRole } from "../../../helpers/reservation-limits";
+import { MAX_RESERVATIONS_BY_ROLE } from "../../../config/reservation-policy";
 import {
   NoCarLinkedToUserError,
   NoParkingSpotAvailableError,
@@ -33,7 +33,7 @@ export async function reserveParkingSpot(
     throw new SeedDataMissingError();
   }
 
-  const maxAllowed = getMaxReservationsForRole(userInfo.role);
+  const maxAllowed = MAX_RESERVATIONS_BY_ROLE[userInfo.role];
 
   if (userInfo.reservationCount >= maxAllowed) {
     throw new ReservationLimitExceededError(userInfo.reservationCount, maxAllowed);

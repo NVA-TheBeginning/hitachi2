@@ -33,7 +33,9 @@ COPY --from=installer /app/apps/server/server /app/server
 COPY --from=installer /app/packages/db/prisma/schema /app/packages/db/prisma/schema
 COPY --from=installer /app/packages/db/prisma /app/packages/db/prisma
 COPY --from=installer /app/packages/db/prisma.config.ts /app/packages/db/prisma.config.ts
+COPY --from=installer /app/packages/db/package.json /app/packages/db/package.json
 COPY --from=installer /app/package.json /app/package.json
+COPY --from=installer /app/bun.lock /app/bun.lock
 
 EXPOSE 3000
 

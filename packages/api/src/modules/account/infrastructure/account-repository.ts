@@ -1,6 +1,6 @@
 import type { IAccountRepository } from "@api/types";
 import prisma, { Prisma, ReservationStatus, type UserRole } from "@hitachi2/db";
-import { getMaxReservationsForRole } from "../../../helpers/reservation-limits";
+import { MAX_RESERVATIONS_BY_ROLE } from "../../../config/reservation-policy";
 import { CarLicensePlateAlreadyUsedError } from "../domain/errors";
 
 const userCarSelect = {
@@ -80,7 +80,7 @@ export class PrismaAccountRepository implements IAccountRepository {
       return null;
     }
 
-    const maxReservations = getMaxReservationsForRole(account.role);
+    const maxReservations = MAX_RESERVATIONS_BY_ROLE[account.role];
 
     return {
       ...account,
@@ -194,7 +194,7 @@ export class PrismaAccountRepository implements IAccountRepository {
       },
     });
 
-    const maxReservations = getMaxReservationsForRole(user.role);
+    const maxReservations = MAX_RESERVATIONS_BY_ROLE[user.role];
     const reservationCount = await prisma.reservation.count({
       where: {
         userId: user.id,
