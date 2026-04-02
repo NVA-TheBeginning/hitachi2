@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { ParkingMap } from "@/components/parking-map";
-import { getServerSession } from "@/lib/auth-session";
+import { client } from "@/utils/orpc";
+
+export const dynamic = "force-dynamic";
 
 export default async function ParkingPage() {
-  const session = await getServerSession();
+  const session = await client.getSession();
 
   if (!session?.user) {
     redirect("/login");

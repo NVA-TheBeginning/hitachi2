@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-
 import { MyReservationsCard } from "@/components/my-reservations-card";
 import { ParkingReservationCard } from "@/components/parking-reservation-card";
-import { getServerSession } from "@/lib/auth-session";
+import { client } from "@/utils/orpc";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const session = await getServerSession();
+  const session = await client.getSession();
 
   if (!session?.user) {
     redirect("/login");

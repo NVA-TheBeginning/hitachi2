@@ -10,9 +10,11 @@ declare global {
   var $orpcClient: AppRouterClient | undefined;
 }
 
-globalThis.$orpcClient = createRouterClient(appRouter, {
-  context: async () => {
-    const headersList = await headers();
-    return createContext(Object.fromEntries(headersList.entries()));
-  },
-});
+export const client: AppRouterClient =
+  globalThis.$orpcClient ??
+  createRouterClient(appRouter, {
+    context: async () => {
+      const headersList = await headers();
+      return createContext(Object.fromEntries(headersList.entries()));
+    },
+  });

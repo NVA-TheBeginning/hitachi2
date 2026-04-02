@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "@/lib/auth-session";
 import { UserRole } from "@/lib/enum";
+import { client } from "@/utils/orpc";
 import { QrCodeGrid } from "./qr-code-grid";
 
+export const dynamic = "force-dynamic";
+
 export default async function QrCodesPage() {
-  const session = await getServerSession();
+  const session = await client.getSession();
 
   if (!session?.user) redirect("/login");
   if (session.user.role !== UserRole.MANAGER) redirect("/dashboard");
