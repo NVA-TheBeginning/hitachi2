@@ -28,7 +28,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
         {
           onSuccess: () => {
             router.push("/dashboard");
-            toast.success("Sign in successful");
+            toast.success("Connexion reussie.");
           },
           onError: (error) => {
             toast.error(error.error.message || error.error.statusText);

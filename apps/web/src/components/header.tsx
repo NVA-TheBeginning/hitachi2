@@ -9,11 +9,13 @@ import UserMenu from "./user-menu";
 
 export default function Header() {
   const { data: session } = authClient.useSession();
+  const isManager = session?.user?.role === "MANAGER";
 
   const links: ReadonlyArray<{ to: Route; label: string }> = [
     { to: "/status", label: "Status" },
     { to: "/dashboard", label: "Dashboard" },
     { to: "/parking" as Route, label: "Parking" },
+    ...(isManager ? [{ to: "/dashboard/statistics" as Route, label: "Statistiques" }] : []),
     { to: "/account", label: "Mon compte" },
   ];
 
