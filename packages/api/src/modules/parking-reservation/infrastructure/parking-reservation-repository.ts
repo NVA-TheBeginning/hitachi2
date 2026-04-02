@@ -44,6 +44,27 @@ function buildAvailableSpotWhere(reservedSpotIds: string[], charger?: boolean) {
   };
 }
 
+async function findSuitableSpot(
+  tx: Prisma.TransactionClient,
+  reservedSpotIds: string[],
+  electric: boolean,
+): Promise<{ id: string; name: string; charger: boolean } | null> {
+  const preferredSpot = await tx.parkingSpot.findFirst({
+    where: buildAvailableSpotWhere(reservedSpotIds, electric),
+    orderBy: { name: "asc" },
+    select: parkingSpotSummarySelect,
+  });
+
+  if (preferredSpot) return preferredSpot;
+  if (!electric) return null;
+
+  return tx.parkingSpot.findFirst({
+    where: buildAvailableSpotWhere(reservedSpotIds, false),
+    orderBy: { name: "asc" },
+    select: parkingSpotSummarySelect,
+  });
+}
+
 function toUserReservationSummary(
   reservation: Prisma.ReservationGetPayload<{ select: typeof userReservationSelect }>,
 ): UserReservationSummary {
@@ -162,22 +183,7 @@ export class PrismaReservationRepository implements IReservationRepository {
 
           const reservedSpotIds = reservations.map((r) => r.parkingSpotId);
 
-          const preferredSpot = await tx.parkingSpot.findFirst({
-            where: buildAvailableSpotWhere(reservedSpotIds, !!actor.electric),
-            orderBy: { name: "asc" },
-            select: parkingSpotSummarySelect,
-          });
-
-          const fallbackSpot =
-            actor.electric && !preferredSpot
-              ? await tx.parkingSpot.findFirst({
-                  where: buildAvailableSpotWhere(reservedSpotIds, false),
-                  orderBy: { name: "asc" },
-                  select: parkingSpotSummarySelect,
-                })
-              : null;
-
-          const spot = preferredSpot ?? fallbackSpot;
+          const spot = await findSuitableSpot(tx, reservedSpotIds, !!actor.electric);
 
           if (!spot) return null;
 
