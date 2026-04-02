@@ -38,6 +38,7 @@
     "db:watch": "turbo -F @hitachi2/db db:watch",
     "db:stop": "turbo -F @hitachi2/db db:stop",
     "db:down": "turbo -F @hitachi2/db db:down",
+    "test:e2e": "turbo -F @hitachi2/e2e test:e2e",
     "check": "biome check --write --unsafe ."
   },
   "dependencies": {

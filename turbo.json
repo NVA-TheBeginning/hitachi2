@@ -22,6 +22,10 @@
       "cache": false,
       "persistent": true
     },
+    "test:e2e": {
+      "cache": false,
+      "persistent": true
+    },
     "db:push": {
       "cache": false,
       "env": ["DATABASE_URL"]

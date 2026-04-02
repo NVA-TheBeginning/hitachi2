@@ -1,0 +1,8 @@
+{
+  "extends": "../config/tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "noEmit": true
+  },
+  "include": ["./run-tests.ts", "./tests/**/*.ts"]
+}
