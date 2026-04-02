@@ -247,12 +247,10 @@ export default function PWARegister() {
               </Button>
             </>
           ) : (
-            <>
-              <Button size="sm" variant="outline" onClick={dismissInstallPrompt}>
-                <Share />
-                Compris
-              </Button>
-            </>
+            <Button size="sm" variant="outline" onClick={dismissInstallPrompt}>
+              <Share />
+              Compris
+            </Button>
           )}
         </div>
       </div>
