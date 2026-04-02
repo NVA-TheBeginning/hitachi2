@@ -2,49 +2,32 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import prisma, { UserRole } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import {
+  cleanupUsers,
+  createAuthedContext,
+  createEmployee,
+  createManager,
+  createSecretary,
+  seedUsers,
+} from "../helpers";
 
-const SECRETARY = {
-  id: "test-update-user-secretary",
-  name: "Secretary User",
-  email: "test-update-secretary@test.com",
-  emailVerified: true,
-  role: UserRole.SECRETARY,
-};
+const SECRETARY = createSecretary({ id: "test-update-user-secretary" });
+const EMPLOYEE = createEmployee({ id: "test-update-user-employee", name: "Employee To Update" });
+const MANAGER = createManager({ id: "test-update-user-manager" });
 
-const EMPLOYEE = {
-  id: "test-update-user-employee",
-  name: "Employee To Update",
-  email: "test-update-employee@test.com",
-  emailVerified: true,
-  role: UserRole.EMPLOYEE,
-};
-
-const MANAGER = {
-  id: "test-update-user-manager",
-  name: "Manager User",
-  email: "test-update-manager@test.com",
-  emailVerified: true,
-  role: UserRole.MANAGER,
-};
-
-const secretaryCtx = createContext(SECRETARY);
-const employeeCtx = createContext(EMPLOYEE);
-const managerCtx = createContext(MANAGER);
+const secretaryCtx = createAuthedContext(SECRETARY);
+const employeeCtx = createAuthedContext(EMPLOYEE);
+const managerCtx = createAuthedContext(MANAGER);
 
 beforeAll(async () => {
   await prisma.user.deleteMany({
     where: { id: { in: [SECRETARY.id, EMPLOYEE.id, MANAGER.id] } },
   });
-  await prisma.user.createMany({
-    data: [SECRETARY, EMPLOYEE, MANAGER],
-  });
+  await seedUsers(SECRETARY, EMPLOYEE, MANAGER);
 });
 
 afterAll(async () => {
-  await prisma.user.deleteMany({
-    where: { id: { in: [SECRETARY.id, EMPLOYEE.id, MANAGER.id] } },
-  });
+  await cleanupUsers(SECRETARY, EMPLOYEE, MANAGER);
 });
 
 describe("account router - updateUser", () => {
@@ -61,15 +44,10 @@ describe("account router - updateUser", () => {
     expect(result.role).toBe(UserRole.MANAGER);
   });
 
-  test("should update both name and role for manager", async () => {
-    const result = await call(
-      appRouter.updateUser,
-      { userId: EMPLOYEE.id, name: "Double Update", role: UserRole.SECRETARY },
-      managerCtx,
-    );
-
-    expect(result.name).toBe("Double Update");
-    expect(result.role).toBe(UserRole.SECRETARY);
+  test("should throw FORBIDDEN for manager", async () => {
+    expect(
+      call(appRouter.updateUser, { userId: EMPLOYEE.id, name: "Double Update", role: UserRole.SECRETARY }, managerCtx),
+    ).rejects.toThrow("Access denied");
   });
 
   test("should throw FORBIDDEN for employee", async () => {

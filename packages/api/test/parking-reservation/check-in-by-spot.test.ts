@@ -1,31 +1,25 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { getCurrentReservationDateString, toReservationDate } from "@api/helpers";
 import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
-import { getCurrentReservationDateString, toReservationDate } from "../../src/helpers";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import {
+  cleanupUsers,
+  createAuthedContext,
+  createCar,
+  createSpot,
+  createTestUser,
+  seedCars,
+  seedSpots,
+  seedUsers,
+} from "../helpers";
 
-const USER_1 = {
-  id: "test-cibs-user-1",
-  name: "CI Spot User 1",
-  email: "test-cibs-1@test.com",
-  emailVerified: true,
-};
-const USER_2 = {
-  id: "test-cibs-user-2",
-  name: "CI Spot User 2",
-  email: "test-cibs-2@test.com",
-  emailVerified: true,
-};
-const CAR_1 = { id: "test-cibs-car-1", userId: USER_1.id, electric: false };
-const SPOT = {
-  id: "test-cibs-spot-1",
-  name: "TEST-CIBS-A01",
-  charger: false,
-  available: true,
-};
+const USER_1 = createTestUser({ id: "test-cibs-user-1", name: "CI Spot User 1" });
+const USER_2 = createTestUser({ id: "test-cibs-user-2", name: "CI Spot User 2" });
+const CAR_1 = createCar(USER_1.id, { id: "test-cibs-car-1" });
+const SPOT = createSpot({ id: "test-cibs-spot-1", name: "TEST-CIBS-A01" });
 
-const authedContext = createContext(USER_1);
+const authedContext = createAuthedContext(USER_1);
 
 function todayDate() {
   return toReservationDate(getCurrentReservationDateString());
@@ -37,16 +31,16 @@ beforeAll(async () => {
   await prisma.car.deleteMany({ where: { id: CAR_1.id } });
   await prisma.user.deleteMany({ where: { id: { in: [USER_1.id, USER_2.id] } } });
 
-  await prisma.user.createMany({ data: [USER_1, USER_2] });
-  await prisma.car.create({ data: CAR_1 });
-  await prisma.parkingSpot.create({ data: SPOT });
+  await seedUsers(USER_1, USER_2);
+  await seedCars(CAR_1);
+  await seedSpots(SPOT);
 });
 
 afterAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: SPOT.id } });
   await prisma.parkingSpot.delete({ where: { id: SPOT.id } });
   await prisma.car.delete({ where: { id: CAR_1.id } });
-  await prisma.user.deleteMany({ where: { id: { in: [USER_1.id, USER_2.id] } } });
+  await cleanupUsers(USER_1, USER_2);
 });
 
 beforeEach(async () => {
@@ -54,7 +48,7 @@ beforeEach(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: SPOT.id } });
 });
 
-async function createTodayReservation(overrides?: { userId?: string; carId?: string; status?: ReservationStatus }) {
+async function createTodayReservationTest(overrides?: { userId?: string; carId?: string; status?: ReservationStatus }) {
   return prisma.reservation.create({
     data: {
       userId: overrides?.userId ?? USER_1.id,
@@ -68,7 +62,7 @@ async function createTodayReservation(overrides?: { userId?: string; carId?: str
 
 describe("parking-reservation.checkInBySpot", () => {
   test("should check in, return checkedAt, and update DB state", async () => {
-    await createTodayReservation();
+    await createTodayReservationTest();
 
     const result = await call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext);
 
@@ -104,7 +98,7 @@ describe("parking-reservation.checkInBySpot", () => {
   });
 
   test("should throw NOT_FOUND when reservation belongs to another user", async () => {
-    await createTodayReservation({ userId: USER_2.id, carId: CAR_1.id });
+    await createTodayReservationTest({ userId: USER_2.id, carId: CAR_1.id });
 
     expect(call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
       code: "NOT_FOUND",
@@ -112,7 +106,7 @@ describe("parking-reservation.checkInBySpot", () => {
   });
 
   test("should throw CONFLICT when reservation is already checked in", async () => {
-    await createTodayReservation({ status: ReservationStatus.COMPLETED });
+    await createTodayReservationTest({ status: ReservationStatus.COMPLETED });
 
     expect(call(appRouter.checkInBySpot, { spotId: SPOT.id }, authedContext)).rejects.toMatchObject({
       code: "CONFLICT",

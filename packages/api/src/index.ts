@@ -23,8 +23,8 @@ const requireSecretary = protectedProcedure.use(async ({ context, next }) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED");
   }
-  if (context.session.user.role !== UserRole.MANAGER && context.session.user.role !== UserRole.SECRETARY) {
-    throw new ORPCError("FORBIDDEN", { message: "Access denied. Secretary or Manager role required." });
+  if (context.session.user.role !== UserRole.SECRETARY) {
+    throw new ORPCError("FORBIDDEN", { message: "Access denied. Secretary role required." });
   }
   return next({ context });
 });

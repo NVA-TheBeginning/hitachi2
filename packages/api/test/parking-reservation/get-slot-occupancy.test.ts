@@ -1,29 +1,32 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
+import { getCurrentReservationDateString } from "@api/helpers";
+import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
-import { getCurrentReservationDateString } from "../../src/helpers";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import {
+  cleanupUsers,
+  createAuthedContext,
+  createCar,
+  createSecretary,
+  createSpot,
+  seedCars,
+  seedSpots,
+  seedUsers,
+} from "../helpers";
 
-const USER = {
-  id: "test-soc-user-1",
-  name: "SOC User 1",
-  email: "test-soc-1@test.com",
-  emailVerified: true,
-  role: UserRole.MANAGER,
-};
-const CAR = { id: "test-soc-car-1", userId: USER.id, electric: false };
+const USER = createSecretary({ id: "test-soc-user-1", name: "SOC User 1" });
+const CAR = createCar(USER.id, { id: "test-soc-car-1" });
 
-const SPOT_REG_1 = { id: "test-soc-spot-r1", name: "TEST-SOC-R01", charger: false, available: true };
-const SPOT_REG_2 = { id: "test-soc-spot-r2", name: "TEST-SOC-R02", charger: false, available: true };
-const SPOT_REG_3 = { id: "test-soc-spot-r3", name: "TEST-SOC-R03", charger: false, available: true };
-const SPOT_ELC_1 = { id: "test-soc-spot-e1", name: "TEST-SOC-E01", charger: true, available: true };
-const SPOT_ELC_2 = { id: "test-soc-spot-e2", name: "TEST-SOC-E02", charger: true, available: true };
+const SPOT_REG_1 = createSpot({ id: "test-soc-spot-r1", name: "TEST-SOC-R01" });
+const SPOT_REG_2 = createSpot({ id: "test-soc-spot-r2", name: "TEST-SOC-R02" });
+const SPOT_REG_3 = createSpot({ id: "test-soc-spot-r3", name: "TEST-SOC-R03" });
+const SPOT_ELC_1 = createSpot({ id: "test-soc-spot-e1", name: "TEST-SOC-E01", charger: true });
+const SPOT_ELC_2 = createSpot({ id: "test-soc-spot-e2", name: "TEST-SOC-E02", charger: true });
 
 const ALL_SPOTS = [SPOT_REG_1, SPOT_REG_2, SPOT_REG_3, SPOT_ELC_1, SPOT_ELC_2];
 const ALL_SPOT_IDS = ALL_SPOTS.map((s) => s.id);
 
-const authedContext = createContext(USER);
+const authedContext = createAuthedContext(USER);
 const TODAY = getCurrentReservationDateString();
 
 let disabledSpotIds: string[] = [];
@@ -41,16 +44,16 @@ beforeAll(async () => {
   disabledSpotIds = existing.map((s) => s.id);
   await prisma.parkingSpot.updateMany({ where: { id: { in: disabledSpotIds } }, data: { available: false } });
 
-  await prisma.user.create({ data: USER });
-  await prisma.car.create({ data: CAR });
-  await prisma.parkingSpot.createMany({ data: ALL_SPOTS });
+  await seedUsers(USER);
+  await seedCars(CAR);
+  await seedSpots(...ALL_SPOTS);
 });
 
 afterAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: { in: ALL_SPOT_IDS } } });
   await prisma.parkingSpot.deleteMany({ where: { id: { in: ALL_SPOT_IDS } } });
   await prisma.car.delete({ where: { id: CAR.id } });
-  await prisma.user.delete({ where: { id: USER.id } });
+  await cleanupUsers(USER);
 
   await prisma.parkingSpot.updateMany({ where: { id: { in: disabledSpotIds } }, data: { available: true } });
 });
@@ -114,18 +117,15 @@ describe("parking-reservation.getSlotOccupancy", () => {
   });
 
   test("should calculate correct occupancy rates", async () => {
-    // 2 of 3 regular, 1 of 2 electric
     await createReservation(SPOT_REG_1.id, ReservationStatus.RESERVED);
     await createReservation(SPOT_REG_2.id, ReservationStatus.COMPLETED);
     await createReservation(SPOT_ELC_1.id, ReservationStatus.RESERVED);
 
     const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
 
-    // 3 out of 5 total = 60%
     expect(result.occupiedSlots).toBe(3);
     expect(result.occupancyRate).toBeCloseTo(60, 1);
 
-    // 1 out of 2 electric = 50%
     expect(result.occupiedElectricSlots).toBe(1);
     expect(result.electricOccupancyRate).toBeCloseTo(50, 1);
   });

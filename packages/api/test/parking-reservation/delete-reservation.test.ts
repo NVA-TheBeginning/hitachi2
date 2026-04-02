@@ -2,41 +2,26 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:tes
 import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import {
+  cleanupUsers,
+  createAuthedContext,
+  createCar,
+  createEmployee,
+  createSecretary,
+  createSpot,
+  seedCars,
+  seedSpots,
+  seedUsers,
+} from "../helpers";
 
-const SECRETARY = {
-  id: "test-delete-res-secretary",
-  name: "Secretary User",
-  email: "test-delete-res-secretary@test.com",
-  emailVerified: true,
-  role: UserRole.SECRETARY,
-};
+const SECRETARY = createSecretary({ id: "test-delete-res-secretary" });
+const EMPLOYEE = createEmployee({ id: "test-delete-res-employee" });
 
-const EMPLOYEE = {
-  id: "test-delete-res-employee",
-  name: "Employee User",
-  email: "test-delete-res-employee@test.com",
-  emailVerified: true,
-  role: UserRole.EMPLOYEE,
-};
+const CAR = createCar(EMPLOYEE.id, { id: "test-delete-res-car" });
+const SPOT = createSpot({ id: "test-delete-res-spot", name: "DRS-SPOT-01" });
 
-const CAR = {
-  id: "test-delete-res-car",
-  userId: EMPLOYEE.id,
-  name: "Test Car",
-  licensePlate: "DRS-001-AA",
-  electric: false,
-};
-
-const SPOT = {
-  id: "test-delete-res-spot",
-  name: "DRS-SPOT-01",
-  charger: false,
-  available: true,
-};
-
-const secretaryCtx = createContext(SECRETARY);
-const employeeCtx = createContext(EMPLOYEE);
+const secretaryCtx = createAuthedContext(SECRETARY);
+const employeeCtx = createAuthedContext(EMPLOYEE);
 
 let reservationId: string;
 
@@ -48,9 +33,9 @@ beforeAll(async () => {
     where: { id: { in: [SECRETARY.id, EMPLOYEE.id] } },
   });
 
-  await prisma.user.createMany({ data: [SECRETARY, EMPLOYEE] });
-  await prisma.car.create({ data: CAR });
-  await prisma.parkingSpot.create({ data: SPOT });
+  await seedUsers(SECRETARY, EMPLOYEE);
+  await seedCars(CAR);
+  await seedSpots(SPOT);
 });
 
 beforeEach(async () => {
@@ -73,9 +58,7 @@ afterAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: SPOT.id } });
   await prisma.parkingSpot.deleteMany({ where: { id: SPOT.id } });
   await prisma.car.deleteMany({ where: { id: CAR.id } });
-  await prisma.user.deleteMany({
-    where: { id: { in: [SECRETARY.id, EMPLOYEE.id] } },
-  });
+  await cleanupUsers(SECRETARY, EMPLOYEE);
 });
 
 describe("parking reservation router - deleteReservation", () => {
@@ -88,7 +71,7 @@ describe("parking reservation router - deleteReservation", () => {
     expect(deleted).toBeNull();
   });
 
-  test("should delete reservation for manager", async () => {
+  test("should throw FORBIDDEN for manager", async () => {
     const uniqueId = Date.now().toString();
     const manager = {
       id: `mgr-delete-${uniqueId}`,
@@ -97,7 +80,7 @@ describe("parking reservation router - deleteReservation", () => {
       role: UserRole.MANAGER,
       emailVerified: true,
     };
-    const managerCtx = createContext(manager);
+    const managerCtx = createAuthedContext(manager);
 
     await prisma.user.create({
       data: {
@@ -120,12 +103,7 @@ describe("parking reservation router - deleteReservation", () => {
       },
     });
 
-    await call(appRouter.deleteReservation, { reservationId: res.id }, managerCtx);
-
-    const deleted = await prisma.reservation.findUnique({
-      where: { id: res.id },
-    });
-    expect(deleted).toBeNull();
+    expect(call(appRouter.deleteReservation, { reservationId: res.id }, managerCtx)).rejects.toThrow("Access denied");
 
     await prisma.user.delete({ where: { id: manager.id } });
   });

@@ -7,7 +7,7 @@ export default async function UsersPage() {
   const session = await getServerSession();
 
   if (!session?.user) redirect("/login");
-  if (session.user.role !== UserRole.MANAGER && session.user.role !== UserRole.SECRETARY) redirect("/dashboard");
+  if (session.user.role !== UserRole.SECRETARY) redirect("/dashboard");
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-6">

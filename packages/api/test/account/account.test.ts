@@ -1,43 +1,30 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { toReservationDate } from "@api/helpers";
-import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
+import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import { cleanupUsers, createAuthedContext, createCar, createEmployee, seedCars, seedUsers } from "../helpers";
 
-const TEST_USER = {
-  id: "test-account-user",
-  name: "Account Owner",
-  email: "test-account@test.com",
-  emailVerified: true as const,
-  role: UserRole.EMPLOYEE,
-};
-
-const OTHER_USER = {
+const TEST_USER = createEmployee({ id: "test-account-user", name: "Account Owner", email: "test-account@test.com" });
+const OTHER_USER = createEmployee({
   id: "test-account-other-user",
   name: "Other User",
   email: "test-account-other@test.com",
-  emailVerified: true as const,
-  role: UserRole.EMPLOYEE,
-};
+});
 
-const EXISTING_CAR = {
+const EXISTING_CAR = createCar(TEST_USER.id, {
   id: "test-account-car",
-  userId: TEST_USER.id,
   name: "Voiture principale",
   licensePlate: "AC-001-AA",
-  electric: false,
-};
-
-const OTHER_CAR = {
+});
+const OTHER_CAR = createCar(OTHER_USER.id, {
   id: "test-account-other-car",
-  userId: OTHER_USER.id,
   name: "Voiture secondaire",
   licensePlate: "AC-002-AA",
   electric: true,
-};
+});
 
-const accountCtx = createContext(TEST_USER);
+const accountCtx = createAuthedContext(TEST_USER);
 
 beforeAll(async () => {
   await prisma.reservation.deleteMany({
@@ -50,12 +37,8 @@ beforeAll(async () => {
     where: { id: { in: [TEST_USER.id, OTHER_USER.id] } },
   });
 
-  await prisma.user.createMany({
-    data: [TEST_USER, OTHER_USER],
-  });
-  await prisma.car.createMany({
-    data: [EXISTING_CAR, OTHER_CAR],
-  });
+  await seedUsers(TEST_USER, OTHER_USER);
+  await seedCars(EXISTING_CAR, OTHER_CAR);
 });
 
 afterEach(async () => {
@@ -85,9 +68,7 @@ afterAll(async () => {
   await prisma.car.deleteMany({
     where: { userId: { in: [TEST_USER.id, OTHER_USER.id] } },
   });
-  await prisma.user.deleteMany({
-    where: { id: { in: [TEST_USER.id, OTHER_USER.id] } },
-  });
+  await cleanupUsers(TEST_USER, OTHER_USER);
 });
 
 describe("account router", () => {

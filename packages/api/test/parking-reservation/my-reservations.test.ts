@@ -1,60 +1,51 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { toReservationDate } from "@api/helpers";
-import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
+import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import { cleanupUsers, createAuthedContext, createCar, createEmployee, seedCars, seedUsers } from "../helpers";
 
-const TEST_USER = {
+const TEST_USER = createEmployee({
   id: "test-my-reservations-user",
   name: "Reservation Owner",
   email: "test-my-reservations@test.com",
-  emailVerified: true as const,
-  role: UserRole.EMPLOYEE,
-};
-
-const OTHER_USER = {
+});
+const OTHER_USER = createEmployee({
   id: "test-my-reservations-other-user",
   name: "Other User",
   email: "test-my-reservations-other@test.com",
-  emailVerified: true as const,
-  role: UserRole.EMPLOYEE,
-};
+});
 
-const TEST_CAR = {
+const TEST_CAR = createCar(TEST_USER.id, {
   id: "test-my-reservations-car",
-  userId: TEST_USER.id,
   name: "Owner car",
   licensePlate: "MR-001-AA",
-  electric: false,
-};
-
-const OTHER_CAR = {
+});
+const OTHER_CAR = createCar(OTHER_USER.id, {
   id: "test-my-reservations-other-car",
-  userId: OTHER_USER.id,
   name: "Other car",
   licensePlate: "MR-002-AA",
   electric: true,
-};
+});
 
 beforeAll(async () => {
   await prisma.car.deleteMany({ where: { userId: { in: [TEST_USER.id, OTHER_USER.id] } } });
   await prisma.user.deleteMany({ where: { id: { in: [TEST_USER.id, OTHER_USER.id] } } });
-  await prisma.user.createMany({ data: [TEST_USER, OTHER_USER] });
-  await prisma.car.createMany({ data: [TEST_CAR, OTHER_CAR] });
+  await seedUsers(TEST_USER, OTHER_USER);
+  await seedCars(TEST_CAR, OTHER_CAR);
 });
 
 afterAll(async () => {
   await prisma.reservation.deleteMany({ where: { userId: { in: [TEST_USER.id, OTHER_USER.id] } } });
   await prisma.car.deleteMany({ where: { userId: { in: [TEST_USER.id, OTHER_USER.id] } } });
-  await prisma.user.deleteMany({ where: { id: { in: [TEST_USER.id, OTHER_USER.id] } } });
+  await cleanupUsers(TEST_USER, OTHER_USER);
 });
 
 afterEach(async () => {
   await prisma.reservation.deleteMany({ where: { userId: { in: [TEST_USER.id, OTHER_USER.id] } } });
 });
 
-const userCtx = createContext(TEST_USER);
+const userCtx = createAuthedContext(TEST_USER);
 
 async function getTwoAvailableSpots() {
   const spots = await prisma.parkingSpot.findMany({

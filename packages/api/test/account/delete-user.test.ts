@@ -2,51 +2,22 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import prisma, { UserRole } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import { createAuthedContext, createEmployee, createManager, createSecretary, seedUsers } from "../helpers";
 
-const SECRETARY = {
-  id: "test-delete-user-secretary",
-  name: "Secretary User",
-  email: "test-delete-secretary@test.com",
-  emailVerified: true,
-  role: UserRole.SECRETARY,
-};
+const SECRETARY = createSecretary({ id: "test-delete-user-secretary" });
+const EMPLOYEE_TO_DELETE = createEmployee({ id: "test-delete-user-victim", name: "Employee To Delete" });
+const MANAGER = createManager({ id: "test-delete-user-manager" });
+const EMPLOYEE = createEmployee({ id: "test-delete-user-employee" });
 
-const EMPLOYEE_TO_DELETE = {
-  id: "test-delete-user-victim",
-  name: "Employee To Delete",
-  email: "test-delete-victim@test.com",
-  emailVerified: true,
-  role: UserRole.EMPLOYEE,
-};
-
-const MANAGER = {
-  id: "test-delete-user-manager",
-  name: "Manager User",
-  email: "test-delete-manager@test.com",
-  emailVerified: true,
-  role: UserRole.MANAGER,
-};
-
-const EMPLOYEE = {
-  id: "test-delete-user-employee",
-  name: "Employee User",
-  email: "test-delete-employee@test.com",
-  emailVerified: true,
-  role: UserRole.EMPLOYEE,
-};
-
-const secretaryCtx = createContext(SECRETARY);
-const employeeCtx = createContext(EMPLOYEE);
-const managerCtx = createContext(MANAGER);
+const secretaryCtx = createAuthedContext(SECRETARY);
+const employeeCtx = createAuthedContext(EMPLOYEE);
+const managerCtx = createAuthedContext(MANAGER);
 
 beforeAll(async () => {
   await prisma.user.deleteMany({
     where: { id: { in: [SECRETARY.id, EMPLOYEE_TO_DELETE.id, MANAGER.id, EMPLOYEE.id] } },
   });
-  await prisma.user.createMany({
-    data: [SECRETARY, EMPLOYEE_TO_DELETE, MANAGER, EMPLOYEE],
-  });
+  await seedUsers(SECRETARY, EMPLOYEE_TO_DELETE, MANAGER, EMPLOYEE);
 });
 
 afterAll(async () => {
@@ -65,24 +36,20 @@ describe("account router - deleteUser", () => {
     expect(deleted).toBeNull();
   });
 
-  test("should delete user for manager", async () => {
-    const victimId = "test-delete-user-victim-2";
+  test("should throw FORBIDDEN for manager", async () => {
+    const uniqueId = Date.now().toString();
+    const victimId = `test-delete-user-victim-2-${uniqueId}`;
     await prisma.user.create({
       data: {
         id: victimId,
         name: "Victim 2",
-        email: "test-delete-victim-2@test.com",
+        email: `test-delete-victim-2-${uniqueId}@test.com`,
         emailVerified: true,
         role: UserRole.EMPLOYEE,
       },
     });
 
-    await call(appRouter.deleteUser, { userId: victimId }, managerCtx);
-
-    const deleted = await prisma.user.findUnique({
-      where: { id: victimId },
-    });
-    expect(deleted).toBeNull();
+    expect(call(appRouter.deleteUser, { userId: victimId }, managerCtx)).rejects.toThrow("Access denied");
   });
 
   test("should throw FORBIDDEN for employee", async () => {

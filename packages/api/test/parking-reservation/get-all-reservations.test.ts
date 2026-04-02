@@ -1,35 +1,26 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
+import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import {
+  cleanupUsers,
+  createAuthedContext,
+  createCar,
+  createEmployee,
+  createSecretary,
+  createSpot,
+  seedCars,
+  seedSpots,
+  seedUsers,
+} from "../helpers";
 
-const SECRETARY = {
-  id: "test-reservations-secretary",
-  name: "Secretary User",
-  email: "test-reservations-secretary@test.com",
-  emailVerified: true,
-  role: UserRole.SECRETARY,
-};
+const SECRETARY = createSecretary({ id: "test-reservations-secretary" });
+const EMPLOYEE = createEmployee({ id: "test-reservations-employee" });
 
-const EMPLOYEE = {
-  id: "test-reservations-employee",
-  name: "Employee User",
-  email: "test-reservations-employee@test.com",
-  emailVerified: true,
-  role: UserRole.EMPLOYEE,
-};
+const CAR = createCar(EMPLOYEE.id, { id: "test-reservations-car", licensePlate: "RES-001-AA" });
 
-const CAR = {
-  id: "test-reservations-car",
-  userId: EMPLOYEE.id,
-  name: "Test Car",
-  licensePlate: "RES-001-AA",
-  electric: false,
-};
-
-const secretaryCtx = createContext(SECRETARY);
-const employeeCtx = createContext(EMPLOYEE);
+const secretaryCtx = createAuthedContext(SECRETARY);
+const employeeCtx = createAuthedContext(EMPLOYEE);
 
 beforeAll(async () => {
   await prisma.reservation.deleteMany({
@@ -43,14 +34,12 @@ beforeAll(async () => {
     where: { id: { in: [SECRETARY.id, EMPLOYEE.id] } },
   });
 
-  await prisma.user.createMany({ data: [SECRETARY, EMPLOYEE] });
-  await prisma.car.create({ data: CAR });
-  await prisma.parkingSpot.createMany({
-    data: [
-      { id: "test-res-spot-1", name: "RES-SPOT-01", charger: false, available: true },
-      { id: "test-res-spot-2", name: "RES-SPOT-02", charger: true, available: true },
-    ],
-  });
+  await seedUsers(SECRETARY, EMPLOYEE);
+  await seedCars(CAR);
+  await seedSpots(
+    createSpot({ id: "test-res-spot-1", name: "RES-SPOT-01" }),
+    createSpot({ id: "test-res-spot-2", name: "RES-SPOT-02", charger: true }),
+  );
 });
 
 afterAll(async () => {
@@ -61,9 +50,7 @@ afterAll(async () => {
     where: { id: { startsWith: "test-res-" } },
   });
   await prisma.car.deleteMany({ where: { id: CAR.id } });
-  await prisma.user.deleteMany({
-    where: { id: { in: [SECRETARY.id, EMPLOYEE.id] } },
-  });
+  await cleanupUsers(SECRETARY, EMPLOYEE);
 });
 
 describe("parking reservation router - getAllReservations", () => {

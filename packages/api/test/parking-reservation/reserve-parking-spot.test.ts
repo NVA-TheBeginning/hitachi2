@@ -1,69 +1,48 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { toReservationDate } from "@api/helpers";
-import prisma, { ReservationStatus, UserRole } from "@hitachi2/db";
+import prisma, { ReservationStatus } from "@hitachi2/db";
 import { call } from "@orpc/server";
 import { appRouter } from "../../src/routers/index";
-import { createContext } from "../helpers";
+import {
+  cleanupUsers,
+  createAuthedContext,
+  createCar,
+  createEmployee,
+  createManager,
+  seedCars,
+  seedUsers,
+} from "../helpers";
 
 const SUCCESS_DATE = "2099-06-01";
 const CONFLICT_DATE = "2099-06-02";
 const RACE_DATE = "2099-06-03";
 
-const TEST_USER = {
-  id: "test-reserve-user",
-  name: "Test User",
-  email: "test-reserve@test.com",
-  emailVerified: true as const,
-  role: UserRole.EMPLOYEE,
-};
+const TEST_USER = createEmployee({ id: "test-reserve-user", email: "test-reserve@test.com" });
+const TEST_MANAGER = createManager({ id: "test-manager-user", email: "test-manager@test.com" });
+const TEST_FILLER = createManager({ id: "test-filler-user", email: "test-filler@test.com" });
 
-const TEST_MANAGER = {
-  id: "test-manager-user",
-  name: "Test Manager",
-  email: "test-manager@test.com",
-  emailVerified: true,
-  role: UserRole.MANAGER,
-};
-
-const TEST_FILLER = {
-  id: "test-filler-user",
-  name: "Test Filler",
-  email: "test-filler@test.com",
-  emailVerified: true as const,
-  role: UserRole.MANAGER,
-};
-
-const TEST_USER_CAR = {
+const TEST_USER_CAR = createCar(TEST_USER.id, {
   id: "test-reserve-user-car",
-  userId: TEST_USER.id,
   name: "Employee car",
   licensePlate: "RS-001-AA",
-  electric: false,
-};
-
-const TEST_USER_EV_CAR = {
+});
+const TEST_USER_EV_CAR = createCar(TEST_USER.id, {
   id: "test-reserve-user-ev-car",
-  userId: TEST_USER.id,
   name: "Employee EV car",
   licensePlate: "RS-004-AA",
   electric: true,
-};
-
-const TEST_MANAGER_CAR = {
+});
+const TEST_MANAGER_CAR = createCar(TEST_MANAGER.id, {
   id: "test-manager-user-car",
-  userId: TEST_MANAGER.id,
   name: "Manager car",
   licensePlate: "RS-002-AA",
   electric: true,
-};
-
-const TEST_FILLER_CAR = {
+});
+const TEST_FILLER_CAR = createCar(TEST_FILLER.id, {
   id: "test-filler-user-car",
-  userId: TEST_FILLER.id,
   name: "Filler car",
   licensePlate: "RS-003-AA",
-  electric: false,
-};
+});
 
 beforeAll(async () => {
   await prisma.car.deleteMany({
@@ -72,20 +51,12 @@ beforeAll(async () => {
   await prisma.user.deleteMany({
     where: { id: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
   });
-  await prisma.user.createMany({ data: [TEST_USER, TEST_MANAGER, TEST_FILLER] });
-  await prisma.car.createMany({ data: [TEST_USER_CAR, TEST_USER_EV_CAR, TEST_MANAGER_CAR, TEST_FILLER_CAR] });
+  await seedUsers(TEST_USER, TEST_MANAGER, TEST_FILLER);
+  await seedCars(TEST_USER_CAR, TEST_USER_EV_CAR, TEST_MANAGER_CAR, TEST_FILLER_CAR);
 });
 
 afterAll(async () => {
-  await prisma.reservation.deleteMany({
-    where: { userId: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
-  });
-  await prisma.car.deleteMany({
-    where: { userId: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
-  });
-  await prisma.user.deleteMany({
-    where: { id: { in: [TEST_USER.id, TEST_MANAGER.id, TEST_FILLER.id] } },
-  });
+  await cleanupUsers(TEST_USER, TEST_MANAGER, TEST_FILLER);
 });
 
 afterEach(async () => {
@@ -94,8 +65,8 @@ afterEach(async () => {
   });
 });
 
-const employeeCtx = createContext(TEST_USER);
-const managerCtx = createContext(TEST_MANAGER);
+const employeeCtx = createAuthedContext(TEST_USER);
+const managerCtx = createAuthedContext(TEST_MANAGER);
 
 describe("parking-reservation.reserveParkingSpot", () => {
   test("should reserve the first available spot", async () => {

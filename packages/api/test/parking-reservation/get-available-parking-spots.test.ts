@@ -5,42 +5,24 @@ import { call } from "@orpc/server";
 import { releaseAndGetAvailableParkingSpots } from "../../src/modules/parking-reservation/application/release-and-get-available-parking-spots";
 import { PrismaReservationRepository } from "../../src/modules/parking-reservation/infrastructure/parking-reservation-repository";
 import { appRouter } from "../../src/routers/index";
+import {
+  cleanupUsers,
+  createCar,
+  createSpot,
+  createTestUser,
+  seedCars,
+  seedSpots,
+  seedUsers,
+  unauthedContext,
+} from "../helpers";
 
-const USER = {
-  id: "test-list-user-1",
-  name: "List User",
-  email: "test-list-1@test.com",
-  emailVerified: true,
-};
-
-const CAR = {
-  id: "test-list-car-1",
-  userId: USER.id,
-  electric: false,
-};
-
-const FREE_SPOT = {
-  id: "test-list-spot-free",
-  name: "TEST-LIST-A01",
-  charger: false,
-  available: true,
-};
-
-const RESERVED_SPOT = {
-  id: "test-list-spot-reserved",
-  name: "TEST-LIST-A02",
-  charger: false,
-  available: true,
-};
-
-const context = {
-  context: {
-    session: null,
-    jobQueue: { send: async () => null },
-  },
-};
+const USER = createTestUser({ id: "test-list-user-1", name: "List User" });
+const CAR = createCar(USER.id, { id: "test-list-car-1" });
+const FREE_SPOT = createSpot({ id: "test-list-spot-free", name: "TEST-LIST-A01" });
+const RESERVED_SPOT = createSpot({ id: "test-list-spot-reserved", name: "TEST-LIST-A02" });
 
 beforeAll(async () => {
+  if (!FREE_SPOT.id || !RESERVED_SPOT.id) return;
   await prisma.reservation.deleteMany({
     where: {
       parkingSpotId: {
@@ -58,14 +40,13 @@ beforeAll(async () => {
   await prisma.car.deleteMany({ where: { id: CAR.id } });
   await prisma.user.deleteMany({ where: { id: USER.id } });
 
-  await prisma.user.create({ data: USER });
-  await prisma.car.create({ data: CAR });
-  await prisma.parkingSpot.createMany({
-    data: [FREE_SPOT, RESERVED_SPOT],
-  });
+  await seedUsers(USER);
+  await seedCars(CAR);
+  await seedSpots(FREE_SPOT, RESERVED_SPOT);
 });
 
 afterAll(async () => {
+  if (!FREE_SPOT.id || !RESERVED_SPOT.id) return;
   await prisma.reservation.deleteMany({
     where: {
       parkingSpotId: {
@@ -81,7 +62,7 @@ afterAll(async () => {
     },
   });
   await prisma.car.deleteMany({ where: { id: CAR.id } });
-  await prisma.user.deleteMany({ where: { id: USER.id } });
+  await cleanupUsers(USER);
 });
 
 beforeEach(async () => {
@@ -113,7 +94,7 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
     await createReservation(RESERVED_SPOT.id, targetDate);
     await createReservation(FREE_SPOT.id, "2099-08-02");
 
-    const result = await call(appRouter.getAvailableParkingSpots, { date: targetDate }, context);
+    const result = await call(appRouter.getAvailableParkingSpots, { date: targetDate }, unauthedContext);
 
     const spotNames = result.parkingSpots.map((parkingSpot) => parkingSpot.name);
 
@@ -126,7 +107,7 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
   test("should default to today's date when no date is sent", async () => {
     const today = getCurrentReservationDateString();
 
-    const result = await call(appRouter.getAvailableParkingSpots, undefined, context);
+    const result = await call(appRouter.getAvailableParkingSpots, undefined, unauthedContext);
 
     expect(result.date).toBe(today);
   });
@@ -134,12 +115,13 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
   test("should default to today's date when date is an empty string", async () => {
     const today = getCurrentReservationDateString();
 
-    const result = await call(appRouter.getAvailableParkingSpots, { date: "" }, context);
+    const result = await call(appRouter.getAvailableParkingSpots, { date: "" }, unauthedContext);
 
     expect(result.date).toBe(today);
   });
 
   test("should free RESERVED spots past 11am on the same day and mark them NO_SHOW", async () => {
+    if (!RESERVED_SPOT.id) throw new Error("RESERVED_SPOT.id is required for this test");
     const today = getCurrentReservationDateString();
     const reservation = await createReservation(RESERVED_SPOT.id, today);
 
@@ -161,6 +143,7 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
   });
 
   test("should NOT free a reservation made after 11am when checking again", async () => {
+    if (!RESERVED_SPOT.id) throw new Error("RESERVED_SPOT.id is required for this test");
     const today = getCurrentReservationDateString();
     const after11am = new Date(`${today}T11:30:00.000Z`);
     const repo = new PrismaReservationRepository();
@@ -186,6 +169,7 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
   });
 
   test("should keep RESERVED spots before 11am on the same day", async () => {
+    if (!RESERVED_SPOT.id) throw new Error("RESERVED_SPOT.id is required for this test");
     const today = getCurrentReservationDateString();
     await createReservation(RESERVED_SPOT.id, today);
 
@@ -201,7 +185,9 @@ describe("parking-reservation.getAvailableParkingSpots", () => {
   });
 
   test("should throw BAD_REQUEST on invalid date format", async () => {
-    await expect(call(appRouter.getAvailableParkingSpots, { date: "31-03-2026" }, context)).rejects.toMatchObject({
+    await expect(
+      call(appRouter.getAvailableParkingSpots, { date: "31-03-2026" }, unauthedContext),
+    ).rejects.toMatchObject({
       code: "BAD_REQUEST",
     });
   });
