@@ -2,7 +2,7 @@ import { ReservationStatus } from "@hitachi2/db";
 import { z } from "zod";
 import { toReservationDate } from "../../helpers";
 import { handleError } from "../../helpers/handle-error";
-import { protectedProcedure, publicProcedure, secretaryProcedure } from "../../index";
+import { managerProcedure, protectedProcedure, publicProcedure, secretaryProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
 import { checkInBySpot } from "./application/check-in-by-spot";
 import { deleteMyReservation } from "./application/delete-my-reservation";
@@ -99,7 +99,7 @@ export const parkingReservationRouter = {
     return repository.findAllParkingSpots();
   }),
 
-  getSlotOccupancy: secretaryProcedure
+  getSlotOccupancy: managerProcedure
     .input(
       z
         .object({

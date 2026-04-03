@@ -19,7 +19,7 @@ function OccupancyCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-fit" />
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full sm:w-fit" />
         </div>
 
         {isPending && <div className="flex h-20 items-center justify-center text-muted-foreground">Chargement...</div>}
@@ -31,7 +31,7 @@ function OccupancyCard() {
         {data && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                 <span className="text-muted-foreground">
                   {data.occupiedSlots} / {data.totalSlots} places
                 </span>
@@ -46,13 +46,13 @@ function OccupancyCard() {
             </div>
 
             <div className="space-y-2 pt-2 border-t">
-              <div className="flex justify-between text-sm">
+              <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                 <span className="text-muted-foreground">Bornes électriques</span>
                 <span className="font-medium">
                   {data.occupiedElectricSlots} / {data.totalElectricSlots}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                 <span className="text-muted-foreground">Taux occupation</span>
                 <span className="font-medium">{data.electricOccupancyRate.toFixed(1)}%</span>
               </div>
@@ -78,7 +78,7 @@ function NoShowCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-fit" />
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full sm:w-fit" />
         </div>
 
         {isPending && <div className="flex h-20 items-center justify-center text-muted-foreground">Chargement...</div>}
@@ -94,7 +94,7 @@ function NoShowCard() {
               <div className="text-sm text-muted-foreground">Taux d&apos;absentéisme</div>
             </div>
 
-            <div className="flex justify-between text-sm pt-2 border-t">
+            <div className="grid gap-3 border-t pt-2 text-sm sm:grid-cols-3 sm:gap-0">
               <div className="text-center">
                 <div className="font-medium">{data.completedCount}</div>
                 <div className="text-muted-foreground">Honoré(s)</div>

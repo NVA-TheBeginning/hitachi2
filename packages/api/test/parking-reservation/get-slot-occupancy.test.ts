@@ -7,6 +7,7 @@ import {
   cleanupUsers,
   createAuthedContext,
   createCar,
+  createManager,
   createSecretary,
   createSpot,
   seedCars,
@@ -14,7 +15,8 @@ import {
   seedUsers,
 } from "../helpers";
 
-const USER = createSecretary({ id: "test-soc-user-1", name: "SOC User 1" });
+const USER = createManager({ id: "test-soc-user-1", name: "SOC User 1" });
+const SECRETARY = createSecretary({ id: "test-soc-secretary-1", name: "SOC Secretary 1" });
 const CAR = createCar(USER.id, { id: "test-soc-car-1" });
 
 const SPOT_REG_1 = createSpot({ id: "test-soc-spot-r1", name: "TEST-SOC-R01" });
@@ -27,6 +29,7 @@ const ALL_SPOTS = [SPOT_REG_1, SPOT_REG_2, SPOT_REG_3, SPOT_ELC_1, SPOT_ELC_2];
 const ALL_SPOT_IDS = ALL_SPOTS.map((s) => s.id);
 
 const authedContext = createAuthedContext(USER);
+const secretaryContext = createAuthedContext(SECRETARY);
 const TODAY = getCurrentReservationDateString();
 
 let disabledSpotIds: string[] = [];
@@ -35,7 +38,7 @@ beforeAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: { in: ALL_SPOT_IDS } } });
   await prisma.parkingSpot.deleteMany({ where: { id: { in: ALL_SPOT_IDS } } });
   await prisma.car.deleteMany({ where: { id: CAR.id } });
-  await prisma.user.deleteMany({ where: { id: USER.id } });
+  await prisma.user.deleteMany({ where: { id: { in: [USER.id, SECRETARY.id] } } });
 
   const existing = await prisma.parkingSpot.findMany({
     where: { available: true },
@@ -44,7 +47,7 @@ beforeAll(async () => {
   disabledSpotIds = existing.map((s) => s.id);
   await prisma.parkingSpot.updateMany({ where: { id: { in: disabledSpotIds } }, data: { available: false } });
 
-  await seedUsers(USER);
+  await seedUsers(USER, SECRETARY);
   await seedCars(CAR);
   await seedSpots(...ALL_SPOTS);
 });
@@ -53,7 +56,7 @@ afterAll(async () => {
   await prisma.reservation.deleteMany({ where: { parkingSpotId: { in: ALL_SPOT_IDS } } });
   await prisma.parkingSpot.deleteMany({ where: { id: { in: ALL_SPOT_IDS } } });
   await prisma.car.delete({ where: { id: CAR.id } });
-  await cleanupUsers(USER);
+  await cleanupUsers(USER, SECRETARY);
 
   await prisma.parkingSpot.updateMany({ where: { id: { in: disabledSpotIds } }, data: { available: true } });
 });
@@ -168,5 +171,11 @@ describe("parking-reservation.getSlotOccupancy", () => {
         context: { session: null, jobQueue: { send: async () => null } },
       }),
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  test("should throw FORBIDDEN for secretary", async () => {
+    expect(call(appRouter.getSlotOccupancy, { date: TODAY }, secretaryContext)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 });

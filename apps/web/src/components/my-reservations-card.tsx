@@ -3,7 +3,7 @@
 import { formatDateLong } from "@api/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CameraIcon, Loader2, Trash2Icon, XIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,82 @@ import { type client, orpc } from "@/utils/orpc";
 
 type ReservationItem = NonNullable<Awaited<ReturnType<typeof client.getMyReservations>>>[number];
 
+type DetectedBarcode = { rawValue?: string };
+type BarcodeDetectorInstance = {
+  detect: (source: ImageBitmapSource) => Promise<DetectedBarcode[]>;
+};
+type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => BarcodeDetectorInstance;
+
+declare global {
+  interface Window {
+    BarcodeDetector?: BarcodeDetectorConstructor;
+  }
+}
+
+function extractSpotIdFromQrCode(rawValue: string) {
+  const normalized = rawValue.trim();
+  if (!normalized) return null;
+
+  const matchCheckInPath = (value: string) => {
+    const match = value.match(/^\/checkin\/([^/]+)$/);
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  try {
+    if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+      return matchCheckInPath(new URL(normalized).pathname);
+    }
+
+    if (normalized.startsWith("/")) {
+      return matchCheckInPath(normalized);
+    }
+  } catch {
+    return null;
+  }
+
+  return normalized.includes("/") ? null : normalized;
+}
+
 function MobileCheckInCamera({ reservation, onClose }: { reservation: ReservationItem; onClose: () => void }) {
+  const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanTimeoutRef = useRef<number | null>(null);
+  const isSubmittingRef = useRef(false);
   const [cameraState, setCameraState] = useState<"starting" | "ready" | "error">("starting");
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [scannerMessage, setScannerMessage] = useState("Pointe la camera vers le QR code de ta place.");
+
+  const stopCamera = useCallback(() => {
+    if (scanTimeoutRef.current) {
+      window.clearTimeout(scanTimeoutRef.current);
+      scanTimeoutRef.current = null;
+    }
+
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  }, []);
+
+  const checkInMutation = useMutation(
+    orpc.checkInBySpot.mutationOptions({
+      onSuccess: async () => {
+        stopCamera();
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyReservations.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.getMyAccount.key(),
+          }),
+        ]);
+        toast.success("Check-in valide.");
+      },
+      onError: (error) => {
+        isSubmittingRef.current = false;
+        setScannerMessage(error.message);
+      },
+    }),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -60,10 +131,81 @@ function MobileCheckInCamera({ reservation, onClose }: { reservation: Reservatio
 
     return () => {
       cancelled = true;
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+      stopCamera();
     };
-  }, []);
+  }, [stopCamera]);
+
+  useEffect(() => {
+    if (cameraState !== "ready") return;
+
+    if (!window.BarcodeDetector) {
+      setScannerMessage("La lecture automatique du QR code n'est pas supportee sur ce navigateur.");
+      return;
+    }
+
+    let cancelled = false;
+    const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+
+    const scan = async () => {
+      if (cancelled || checkInMutation.isSuccess || isSubmittingRef.current) return;
+
+      const video = videoRef.current;
+      if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        scanTimeoutRef.current = window.setTimeout(() => {
+          void scan();
+        }, 250);
+        return;
+      }
+
+      try {
+        const detectedCodes = await detector.detect(video);
+        const rawValue = detectedCodes.find((code) => typeof code.rawValue === "string")?.rawValue;
+
+        if (!rawValue) {
+          scanTimeoutRef.current = window.setTimeout(() => {
+            void scan();
+          }, 300);
+          return;
+        }
+
+        const scannedSpotId = extractSpotIdFromQrCode(rawValue);
+        if (!scannedSpotId) {
+          setScannerMessage("QR code non reconnu. Scanne un QR code de place genere par l'application.");
+          scanTimeoutRef.current = window.setTimeout(() => {
+            void scan();
+          }, 900);
+          return;
+        }
+
+        if (scannedSpotId !== reservation.parkingSpot.id) {
+          setScannerMessage(`QR invalide. Scanne la place ${reservation.parkingSpot.name}.`);
+          scanTimeoutRef.current = window.setTimeout(() => {
+            void scan();
+          }, 900);
+          return;
+        }
+
+        isSubmittingRef.current = true;
+        setScannerMessage(`QR detecte pour ${reservation.parkingSpot.name}. Validation en cours...`);
+        checkInMutation.mutate({ spotId: scannedSpotId });
+      } catch (error) {
+        setScannerMessage(error instanceof Error ? error.message : "Impossible de lire le QR code.");
+        scanTimeoutRef.current = window.setTimeout(() => {
+          void scan();
+        }, 900);
+      }
+    };
+
+    void scan();
+
+    return () => {
+      cancelled = true;
+      if (scanTimeoutRef.current) {
+        window.clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = null;
+      }
+    };
+  }, [cameraState, checkInMutation, reservation.parkingSpot.id, reservation.parkingSpot.name]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 p-4 text-white">
@@ -104,13 +246,33 @@ function MobileCheckInCamera({ reservation, onClose }: { reservation: Reservatio
                 <p className="text-sm text-zinc-300">{cameraError}</p>
               </div>
             ) : null}
+
+            {checkInMutation.isPending ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/65">
+                <Loader2 className="size-6 animate-spin" />
+                <p className="text-sm text-zinc-200">Validation du check-in...</p>
+              </div>
+            ) : null}
+
+            {checkInMutation.isSuccess ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-emerald-950/90 p-6 text-center">
+                <p className="text-lg font-semibold text-emerald-200">Presence validee</p>
+                <p className="text-sm text-emerald-100">
+                  Check-in confirme pour {reservation.parkingSpot.name} a{" "}
+                  {checkInMutation.data.checkedAt.toLocaleTimeString()}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-medium">Lecture du QR code</p>
-            <p className="mt-1 text-sm text-zinc-300">
-              La camera est prete. Le scan et la validation du QR seront branches dans l'etape suivante.
-            </p>
+            <p className="mt-1 text-sm text-zinc-300">{scannerMessage}</p>
+            {checkInMutation.isSuccess ? (
+              <Button type="button" className="mt-4 w-full" onClick={onClose}>
+                Fermer
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -123,7 +285,7 @@ export function MyReservationsCard() {
   const isMobile = useIsMobile();
   const reservationsQuery = useQuery(orpc.getMyReservations.queryOptions());
   const reservations = reservationsQuery.data ?? [];
-  const [activeCheckInReservationId, setActiveCheckInReservationId] = useState<string | null>(null);
+  const [activeCheckInReservation, setActiveCheckInReservation] = useState<ReservationItem | null>(null);
 
   const deleteReservationMutation = useMutation(
     orpc.deleteMyReservation.mutationOptions({
@@ -143,8 +305,6 @@ export function MyReservationsCard() {
       },
     }),
   );
-
-  const activeReservation = reservations.find((reservation) => reservation.id === activeCheckInReservationId) ?? null;
 
   if (reservationsQuery.isLoading) {
     return (
@@ -205,7 +365,7 @@ export function MyReservationsCard() {
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   {isMobile ? (
-                    <Button type="button" onClick={() => setActiveCheckInReservationId(reservation.id)}>
+                    <Button type="button" onClick={() => setActiveCheckInReservation(reservation)}>
                       <CameraIcon className="size-4" />
                       Check-in
                     </Button>
@@ -234,8 +394,8 @@ export function MyReservationsCard() {
         </CardContent>
       </Card>
 
-      {isMobile && activeReservation ? (
-        <MobileCheckInCamera reservation={activeReservation} onClose={() => setActiveCheckInReservationId(null)} />
+      {isMobile && activeCheckInReservation ? (
+        <MobileCheckInCamera reservation={activeCheckInReservation} onClose={() => setActiveCheckInReservation(null)} />
       ) : null}
     </>
   );
