@@ -1,5 +1,6 @@
 "use client";
 
+import type { UserRole } from "@hitachi2/db/enums";
 import { ArrowLeft, Briefcase, Shield, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
-import type { UserRole } from "@/lib/enum";
 
 interface TestUser {
   name: string;

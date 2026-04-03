@@ -1,15 +1,10 @@
 import type { AppRouterClient } from "@hitachi2/api/routers/index";
-
 import { env } from "@hitachi2/env/web";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-
-declare global {
-  var $orpcClient: AppRouterClient | undefined;
-}
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -25,22 +20,17 @@ export const queryClient = new QueryClient({
 });
 
 export const link = new RPCLink({
-  url: () => {
-    if (typeof window === "undefined") {
-      throw new Error(
-        "RPCLink should not be used on the server. Use the server client from lib/orpc.server.ts instead.",
-      );
+  url: `${env.NEXT_PUBLIC_SERVER_URL}/rpc`,
+  fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
+  headers: async () => {
+    if (typeof window !== "undefined") {
+      return {};
     }
-    return `${env.NEXT_PUBLIC_SERVER_URL}/rpc`;
-  },
-  fetch(url, options) {
-    return fetch(url, {
-      ...options,
-      credentials: "include",
-    });
+    const { headers } = await import("next/headers");
+    return Object.fromEntries(await headers());
   },
 });
 
-export const client: AppRouterClient = globalThis.$orpcClient ?? createORPCClient(link);
+export const client: AppRouterClient = createORPCClient<AppRouterClient>(link);
 
 export const orpc = createTanstackQueryUtils(client);

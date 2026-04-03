@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import AccountPageContent from "@/components/account-page-content";
-import { client } from "@/utils/orpc";
+import { getServerSession } from "@/lib/auth-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
-  const session = await client.getSession();
+  const session = await getServerSession();
 
-  if (!session?.user) {
+  if (!session.data?.user) {
     redirect("/login");
   }
 

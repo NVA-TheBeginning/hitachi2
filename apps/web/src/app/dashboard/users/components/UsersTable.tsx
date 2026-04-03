@@ -1,12 +1,12 @@
 "use client";
 
+import { UserRole } from "@hitachi2/db/enums";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { UserRole } from "@/lib/enum";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function UserRowActions({ user }: { user: { id: string; name: string; role: UserRole } }) {
