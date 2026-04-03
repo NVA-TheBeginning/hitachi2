@@ -16,7 +16,7 @@ export async function reserveParkingSpot(
   const reservationDate = toReservationDate(input.date);
 
   const [reservationActor, availableSpotCount, userInfo] = await Promise.all([
-    repository.findReservationActor(input.userId, input.carId),
+    repository.findUserCarForReservation(input.userId, input.carId),
     repository.countAvailableParkingSpots(),
     repository.getUserReservations(input.userId),
   ]);
@@ -39,7 +39,7 @@ export async function reserveParkingSpot(
     throw new ReservationLimitExceededError(userInfo.reservationCount, maxAllowed);
   }
 
-  const reservation = await repository.findAndCreateReservation(reservationDate, reservationActor);
+  const reservation = await repository.allocateParkingSpot(reservationDate, reservationActor);
 
   if (!reservation) {
     throw new NoParkingSpotAvailableError(input.date);

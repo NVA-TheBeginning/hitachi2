@@ -12,7 +12,7 @@ export async function releaseAndGetAvailableParkingSpots(
   const date = input?.date ?? today;
 
   if (date === today && now.getUTCHours() >= NO_SHOW_RELEASE_HOUR) {
-    await repository.releaseUncheckedReservations(toReservationDate(date));
+    await repository.markNoShowReservations(toReservationDate(date));
   }
 
   return getAvailableParkingSpots(repository, input);

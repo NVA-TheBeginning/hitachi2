@@ -14,7 +14,7 @@ export type ParkingSpotSummary = {
   charger: boolean;
 };
 
-export type ReservationActor = {
+export type ReservingVehicle = {
   userId: string;
   carId: string;
   electric: boolean;
@@ -34,9 +34,9 @@ export type UserReservationSummary = {
 };
 
 export interface IReservationRepository {
-  findReservationActor(userId: string, carId?: string): Promise<ReservationActor | null>;
+  findUserCarForReservation(userId: string, carId?: string): Promise<ReservingVehicle | null>;
   findReservedSpotIdsForDate(date: Date): Promise<string[]>;
-  releaseUncheckedReservations(date: Date): Promise<void>;
+  markNoShowReservations(date: Date): Promise<void>;
   findFirstAvailableSpot(excludedSpotIds: string[]): Promise<ParkingSpotSummary | null>;
   findAvailableSpots(excludedSpotIds: string[]): Promise<ParkingSpotSummary[]>;
   countAvailableParkingSpots(): Promise<number>;
@@ -46,9 +46,9 @@ export interface IReservationRepository {
     parkingSpotId: string;
     date: Date;
   }): Promise<{ id: string; parkingSpot: ParkingSpotSummary }>;
-  findAndCreateReservation(
+  allocateParkingSpot(
     date: Date,
-    actor: ReservationActor,
+    vehicle: ReservingVehicle,
   ): Promise<{
     id: string;
     parkingSpot: ParkingSpotSummary;
@@ -64,14 +64,14 @@ export interface IReservationRepository {
   findReservationById(reservationId: string): Promise<{ id: string; userId: string; status: ReservationStatus } | null>;
   deleteReservation(reservationId: string): Promise<void>;
   findAllParkingSpots(): Promise<ParkingSpotSummary[]>;
-  checkInReservation(reservationId: string): Promise<{ checkedAt: Date }>;
+  confirmArrival(reservationId: string): Promise<{ checkedAt: Date }>;
   getUserReservations(userId: string): Promise<{ reservationCount: number; role: UserRole }>;
   getNoShowStats(input: {
     userId?: string;
     startDate?: Date;
     endDate?: Date;
   }): Promise<{ totalReservations: number; noShowCount: number; completedCount: number; rate: number }>;
-  getSlotOccupancyStats(date: Date): Promise<{
+  getParkingLotUtilization(date: Date): Promise<{
     totalSlots: number;
     occupiedSlots: number;
     occupancyRate: number;
@@ -85,7 +85,7 @@ export interface IReservationRepository {
     endDate?: Date;
     status?: ReservationStatus;
   }): Promise<UserReservationSummary[]>;
-  updateReservationStatus(reservationId: string, status: ReservationStatus): Promise<void>;
+  finalizeReservation(reservationId: string, status: ReservationStatus): Promise<void>;
 }
 
 export type UserCarSummary = {
@@ -96,7 +96,7 @@ export type UserCarSummary = {
   reservationCount: number;
 };
 
-export type UserReservationQuotaSummary = {
+export type UserReservationAllowance = {
   reservationCount: number;
   maxReservations: number;
   remainingReservations: number;
@@ -119,7 +119,7 @@ export type AccountSummary = {
   role: UserRole;
   createdAt: Date;
   cars: UserCarSummary[];
-  reservationQuota: UserReservationQuotaSummary;
+  reservationQuota: UserReservationAllowance;
 };
 
 export interface IAccountRepository {

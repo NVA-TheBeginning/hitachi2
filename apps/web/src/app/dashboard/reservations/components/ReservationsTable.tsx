@@ -37,7 +37,7 @@ function getStatusColor(status: ReservationStatus) {
 
 function ReservationActions({ reservation }: { reservation: { id: string; status: ReservationStatus } }) {
   const updateMutation = useMutation(
-    orpc.updateReservationStatus.mutationOptions({
+    orpc.finalizeReservation.mutationOptions({
       onSuccess: async () => {
         toast.success("Statut mis a jour.");
         await queryClient.invalidateQueries({ queryKey: orpc.getAllReservations.key() });
