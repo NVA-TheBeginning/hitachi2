@@ -19,12 +19,20 @@ const NAV_ITEMS = [
   { href: "/dashboard/statistics", label: "Statistiques", icon: BarChart2, role: UserRole.MANAGER },
 ] as const;
 
+function matchesPath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function Header() {
   const pathname = usePathname();
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
 
   const visibleItems = NAV_ITEMS.filter(({ role }) => !role || userRole === role);
+  const activeHref =
+    visibleItems
+      .filter(({ href }) => matchesPath(pathname, href))
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
 
   return (
     <header className="h-14 backdrop-blur-sm bg-background/90 border-b border-border sticky top-0 z-50">
@@ -32,7 +40,7 @@ export default function Header() {
         <span className="font-mono text-sm font-bold tracking-[0.2em] text-primary uppercase select-none mr-8">H2</span>
         <nav className="flex items-center gap-1 flex-1">
           {visibleItems.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href || pathname.startsWith(href);
+            const isActive = activeHref === href;
             return (
               <Link
                 key={href}
