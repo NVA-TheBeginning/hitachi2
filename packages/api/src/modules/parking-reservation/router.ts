@@ -84,16 +84,18 @@ export const parkingReservationRouter = {
       }
     }),
 
-  confirmArrivalAtSpot: protectedProcedure.input(z.object({ spotId: z.string() })).handler(async ({ input, context }) => {
-    try {
-      return await confirmArrivalAtSpot(repository, {
-        spotId: input.spotId,
-        userId: context.session.user.id,
-      });
-    } catch (error) {
-      handleError(error);
-    }
-  }),
+  confirmArrivalAtSpot: protectedProcedure
+    .input(z.object({ spotId: z.string() }))
+    .handler(async ({ input, context }) => {
+      try {
+        return await confirmArrivalAtSpot(repository, {
+          spotId: input.spotId,
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        handleError(error);
+      }
+    }),
 
   getAllParkingSpots: protectedProcedure.handler(() => {
     return repository.findAllParkingSpots();
