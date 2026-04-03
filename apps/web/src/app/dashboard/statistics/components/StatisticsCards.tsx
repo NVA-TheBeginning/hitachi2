@@ -9,7 +9,7 @@ import { orpc } from "@/utils/orpc";
 
 function OccupancyCard() {
   const [date, setDate] = useState(getCurrentReservationDateString());
-  const { isPending, isError, data, error } = useQuery(orpc.getSlotOccupancy.queryOptions({ date }));
+  const { isPending, isError, data, error } = useQuery(orpc.getParkingLotUtilization.queryOptions({ date }));
 
   return (
     <Card>

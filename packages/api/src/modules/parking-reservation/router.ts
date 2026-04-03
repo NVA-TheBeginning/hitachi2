@@ -4,11 +4,11 @@ import { toReservationDate } from "../../helpers";
 import { handleError } from "../../helpers/handle-error";
 import { managerProcedure, protectedProcedure, publicProcedure, secretaryProcedure } from "../../index";
 import { QUEUE_NAMES } from "../../types";
-import { checkInBySpot } from "./application/check-in-by-spot";
+import { confirmArrivalAtSpot } from "./application/check-in-by-spot";
 import { deleteMyReservation } from "./application/delete-my-reservation";
 import { getMyReservations } from "./application/get-my-reservations";
 import { getNoShowRate } from "./application/get-no-show-rate";
-import { getSlotOccupancy } from "./application/get-slot-occupancy";
+import { getParkingLotUtilization } from "./application/get-slot-occupancy";
 import { releaseAndGetAvailableParkingSpots } from "./application/release-and-get-available-parking-spots";
 import { reserveParkingSpot } from "./application/reserve-parking-spot";
 import { PrismaReservationRepository } from "./infrastructure/parking-reservation-repository";
@@ -84,9 +84,9 @@ export const parkingReservationRouter = {
       }
     }),
 
-  checkInBySpot: protectedProcedure.input(z.object({ spotId: z.string() })).handler(async ({ input, context }) => {
+  confirmArrivalAtSpot: protectedProcedure.input(z.object({ spotId: z.string() })).handler(async ({ input, context }) => {
     try {
-      return await checkInBySpot(repository, {
+      return await confirmArrivalAtSpot(repository, {
         spotId: input.spotId,
         userId: context.session.user.id,
       });
@@ -99,7 +99,7 @@ export const parkingReservationRouter = {
     return repository.findAllParkingSpots();
   }),
 
-  getSlotOccupancy: managerProcedure
+  getParkingLotUtilization: managerProcedure
     .input(
       z
         .object({
@@ -108,7 +108,7 @@ export const parkingReservationRouter = {
         .optional(),
     )
     .handler(({ input }) => {
-      return getSlotOccupancy(repository, { date: input?.date });
+      return getParkingLotUtilization(repository, { date: input?.date });
     }),
 
   getNoShowRate: protectedProcedure
@@ -148,7 +148,7 @@ export const parkingReservationRouter = {
       });
     }),
 
-  updateReservationStatus: secretaryProcedure
+  finalizeReservation: secretaryProcedure
     .input(
       z.object({
         reservationId: z.string(),
@@ -157,7 +157,7 @@ export const parkingReservationRouter = {
     )
     .handler(async ({ input }) => {
       try {
-        await repository.updateReservationStatus(input.reservationId, input.status);
+        await repository.finalizeReservation(input.reservationId, input.status);
       } catch (error) {
         handleError(error);
       }

@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { orpc } from "@/utils/orpc";
 
 export function CheckInContent({ spotId }: { spotId: string }) {
-  const { mutate, ...mutation } = useMutation(orpc.checkInBySpot.mutationOptions());
+  const { mutate, ...mutation } = useMutation(orpc.confirmArrivalAtSpot.mutationOptions());
 
   useEffect(() => {
     mutate({ spotId });

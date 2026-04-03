@@ -70,7 +70,7 @@ function MobileCheckInCamera({ reservation, onClose }: { reservation: Reservatio
   }, []);
 
   const checkInMutation = useMutation(
-    orpc.checkInBySpot.mutationOptions({
+    orpc.confirmArrivalAtSpot.mutationOptions({
       onSuccess: async () => {
         stopCamera();
         await Promise.all([

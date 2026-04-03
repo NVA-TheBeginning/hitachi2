@@ -77,9 +77,9 @@ async function createReservation(spotId: string, status: ReservationStatus, date
   });
 }
 
-describe("parking-reservation.getSlotOccupancy", () => {
+describe("parking-reservation.getParkingLotUtilization", () => {
   test("should return 0% when no reservations exist for the day", async () => {
-    const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
+    const result = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
 
     expect(result.occupiedSlots).toBe(0);
     expect(result.occupancyRate).toBe(0);
@@ -93,7 +93,7 @@ describe("parking-reservation.getSlotOccupancy", () => {
     await createReservation(SPOT_REG_1.id, ReservationStatus.RESERVED);
     await createReservation(SPOT_ELC_1.id, ReservationStatus.RESERVED);
 
-    const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
+    const result = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
 
     expect(result.occupiedSlots).toBe(2);
     expect(result.occupiedElectricSlots).toBe(1);
@@ -103,7 +103,7 @@ describe("parking-reservation.getSlotOccupancy", () => {
     await createReservation(SPOT_REG_1.id, ReservationStatus.COMPLETED);
     await createReservation(SPOT_ELC_1.id, ReservationStatus.COMPLETED);
 
-    const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
+    const result = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
 
     expect(result.occupiedSlots).toBe(2);
     expect(result.occupiedElectricSlots).toBe(1);
@@ -113,7 +113,7 @@ describe("parking-reservation.getSlotOccupancy", () => {
     await createReservation(SPOT_REG_1.id, ReservationStatus.NO_SHOW);
     await createReservation(SPOT_ELC_1.id, ReservationStatus.CANCELLED);
 
-    const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
+    const result = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
 
     expect(result.occupiedSlots).toBe(0);
     expect(result.occupiedElectricSlots).toBe(0);
@@ -124,7 +124,7 @@ describe("parking-reservation.getSlotOccupancy", () => {
     await createReservation(SPOT_REG_2.id, ReservationStatus.COMPLETED);
     await createReservation(SPOT_ELC_1.id, ReservationStatus.RESERVED);
 
-    const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
+    const result = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
 
     expect(result.occupiedSlots).toBe(3);
     expect(result.occupancyRate).toBeCloseTo(60, 1);
@@ -138,7 +138,7 @@ describe("parking-reservation.getSlotOccupancy", () => {
       await createReservation(spot.id, ReservationStatus.RESERVED);
     }
 
-    const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
+    const result = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
 
     expect(result.occupancyRate).toBe(100);
     expect(result.electricOccupancyRate).toBe(100);
@@ -147,8 +147,8 @@ describe("parking-reservation.getSlotOccupancy", () => {
   test("should default to today when no date provided", async () => {
     await createReservation(SPOT_REG_1.id, ReservationStatus.RESERVED);
 
-    const resultWithDate = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
-    const resultDefault = await call(appRouter.getSlotOccupancy, undefined, authedContext);
+    const resultWithDate = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
+    const resultDefault = await call(appRouter.getParkingLotUtilization, undefined, authedContext);
 
     expect(resultDefault.occupiedSlots).toBe(resultWithDate.occupiedSlots);
   });
@@ -160,21 +160,21 @@ describe("parking-reservation.getSlotOccupancy", () => {
 
     await createReservation(SPOT_REG_1.id, ReservationStatus.RESERVED, yesterdayString);
 
-    const result = await call(appRouter.getSlotOccupancy, { date: TODAY }, authedContext);
+    const result = await call(appRouter.getParkingLotUtilization, { date: TODAY }, authedContext);
 
     expect(result.occupiedSlots).toBe(0);
   });
 
   test("should throw UNAUTHORIZED when not authenticated", async () => {
     expect(
-      call(appRouter.getSlotOccupancy, undefined, {
+      call(appRouter.getParkingLotUtilization, undefined, {
         context: { session: null, jobQueue: { send: async () => null } },
       }),
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
   test("should throw FORBIDDEN for secretary", async () => {
-    expect(call(appRouter.getSlotOccupancy, { date: TODAY }, secretaryContext)).rejects.toMatchObject({
+    expect(call(appRouter.getParkingLotUtilization, { date: TODAY }, secretaryContext)).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
   });
