@@ -7,3 +7,10 @@ export const authClient = createAuthClient({
   baseURL: env.NEXT_PUBLIC_SERVER_URL,
   plugins: [inferAdditionalFields<typeof auth>()],
 });
+
+export async function getServerSession() {
+  const { headers } = await import("next/headers");
+  return authClient.getSession({
+    fetchOptions: { headers: Object.fromEntries(await headers()) },
+  });
+}

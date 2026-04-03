@@ -5,6 +5,9 @@
     ".": {
       "default": "./src/index.ts"
     },
+    "./enums": {
+      "default": "./src/enums.ts"
+    },
     "./*": {
       "default": "./src/*.ts"
     }

@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 
-import { client } from "@/utils/orpc";
+import { getServerSession } from "@/lib/auth-client";
 import { CheckInContent } from "./check-in-content";
 
 export const dynamic = "force-dynamic";
 
 export default async function CheckInPage({ params }: { params: Promise<{ spotId: string }> }) {
-  const [session, { spotId }] = await Promise.all([client.getSession(), params]);
+  const [session, { spotId }] = await Promise.all([getServerSession(), params]);
 
-  if (!session?.user) {
+  if (!session.data?.user) {
     redirect(`/login?redirect=/checkin/${spotId}`);
   }
 

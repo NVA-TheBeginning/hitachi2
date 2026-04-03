@@ -1,10 +1,10 @@
 "use client";
 
+import { UserRole } from "@hitachi2/db/enums";
 import { Activity, BarChart2, CalendarCheck, Car, LayoutDashboard, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { UserRole } from "@/lib/enum";
 import { cn } from "@/lib/utils";
 
 import { ModeToggle } from "./mode-toggle";

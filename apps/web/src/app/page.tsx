@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 
-import { client } from "@/utils/orpc";
+import { getServerSession } from "@/lib/auth-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function RootPage() {
-  const session = await client.getSession();
+  const session = await getServerSession();
 
-  redirect(session?.user ? "/dashboard" : "/login");
+  redirect(session.data?.user ? "/dashboard" : "/login");
 }

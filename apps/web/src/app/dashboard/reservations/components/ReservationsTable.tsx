@@ -1,12 +1,12 @@
 "use client";
 
 import { getCurrentReservationDateString } from "@api/helpers";
+import { ReservationStatus } from "@hitachi2/db/enums";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ReservationStatus } from "@/lib/enum";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function getStatusLabel(status: ReservationStatus) {
