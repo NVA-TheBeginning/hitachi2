@@ -141,7 +141,12 @@ export function ReservationsTable() {
           onChange={(e) => setUserFilter(e.target.value)}
           className="w-full sm:max-w-xs"
         />
-        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full sm:w-fit" />
+        <Input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="w-full sm:w-fit"
+        />
         <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full sm:w-fit" />
         <select
           value={statusFilter}
@@ -193,46 +198,46 @@ export function ReservationsTable() {
           </div>
           <div className="hidden rounded-md border md:block">
             <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left text-sm font-medium">Date</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Place</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Voiture</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Statut</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReservations.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    Aucune reservation trouvee.
-                  </td>
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-2 text-left text-sm font-medium">Date</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Place</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Voiture</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Statut</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Actions</th>
                 </tr>
-              ) : (
-                filteredReservations.map((reservation) => (
-                  <tr key={reservation.id} className="border-b">
-                    <td className="px-4 py-2">{new Date(reservation.date).toLocaleDateString("fr-FR")}</td>
-                    <td className="px-4 py-2">{reservation.parkingSpot.name}</td>
-                    <td className="px-4 py-2">
-                      <div>{reservation.car.name}</div>
-                      <div className="text-xs text-muted-foreground">{reservation.car.licensePlate || "N/A"}</div>
-                    </td>
-                    <td className="px-4 py-2">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(reservation.status)}`}
-                      >
-                        {getStatusLabel(reservation.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      <ReservationActions reservation={reservation} />
+              </thead>
+              <tbody>
+                {filteredReservations.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                      Aucune reservation trouvee.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredReservations.map((reservation) => (
+                    <tr key={reservation.id} className="border-b">
+                      <td className="px-4 py-2">{new Date(reservation.date).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-4 py-2">{reservation.parkingSpot.name}</td>
+                      <td className="px-4 py-2">
+                        <div>{reservation.car.name}</div>
+                        <div className="text-xs text-muted-foreground">{reservation.car.licensePlate || "N/A"}</div>
+                      </td>
+                      <td className="px-4 py-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(reservation.status)}`}
+                        >
+                          {getStatusLabel(reservation.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">
+                        <ReservationActions reservation={reservation} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </>
       )}

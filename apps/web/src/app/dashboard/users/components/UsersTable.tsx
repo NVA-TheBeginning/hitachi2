@@ -159,43 +159,43 @@ export function UsersTable() {
           </div>
           <div className="hidden rounded-md border md:block">
             <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left text-sm font-medium">Nom</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Email</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Role</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Voitures</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Reservations</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                    Aucun utilisateur trouve.
-                  </td>
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-2 text-left text-sm font-medium">Nom</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Email</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Role</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Voitures</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Reservations</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Actions</th>
                 </tr>
-              ) : (
-                filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b">
-                    <td className="px-4 py-2">{user.name}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{user.email}</td>
-                    <td className="px-4 py-2">
-                      <span className="inline-flex rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                        {getRoleLabel(user.role)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">{user.carCount}</td>
-                    <td className="px-4 py-2">{user.reservationCount}</td>
-                    <td className="px-4 py-2">
-                      <UserRowActions user={user} />
+              </thead>
+              <tbody>
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      Aucun utilisateur trouve.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <tr key={user.id} className="border-b">
+                      <td className="px-4 py-2">{user.name}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{user.email}</td>
+                      <td className="px-4 py-2">
+                        <span className="inline-flex rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                          {getRoleLabel(user.role)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">{user.carCount}</td>
+                      <td className="px-4 py-2">{user.reservationCount}</td>
+                      <td className="px-4 py-2">
+                        <UserRowActions user={user} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </>
       )}

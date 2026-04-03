@@ -30,9 +30,8 @@ export default function Header() {
 
   const visibleItems = NAV_ITEMS.filter(({ role }) => !role || userRole === role);
   const activeHref =
-    visibleItems
-      .filter(({ href }) => matchesPath(pathname, href))
-      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
+    visibleItems.filter(({ href }) => matchesPath(pathname, href)).sort((a, b) => b.href.length - a.href.length)[0]
+      ?.href ?? null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">

@@ -3,7 +3,7 @@
 import { formatDateLong } from "@api/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CameraIcon, Loader2, Trash2Icon, XIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ function MobileCheckInCamera({ reservation, onClose }: { reservation: Reservatio
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scannerMessage, setScannerMessage] = useState("Pointe la camera vers le QR code de ta place.");
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (scanTimeoutRef.current) {
       window.clearTimeout(scanTimeoutRef.current);
       scanTimeoutRef.current = null;
@@ -67,7 +67,7 @@ function MobileCheckInCamera({ reservation, onClose }: { reservation: Reservatio
 
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
-  };
+  }, []);
 
   const checkInMutation = useMutation(
     orpc.checkInBySpot.mutationOptions({
@@ -133,7 +133,7 @@ function MobileCheckInCamera({ reservation, onClose }: { reservation: Reservatio
       cancelled = true;
       stopCamera();
     };
-  }, []);
+  }, [stopCamera]);
 
   useEffect(() => {
     if (cameraState !== "ready") return;
