@@ -35,10 +35,16 @@ export default function Header() {
       .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
 
   return (
-    <header className="h-14 backdrop-blur-sm bg-background/90 border-b border-border sticky top-0 z-50">
-      <div className="flex items-center justify-between h-full px-6">
-        <span className="font-mono text-sm font-bold tracking-[0.2em] text-primary uppercase select-none mr-8">H2</span>
-        <nav className="flex items-center gap-1 flex-1">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 sm:h-14 sm:flex-nowrap sm:justify-between sm:px-6 sm:py-0">
+        <span className="mr-auto select-none font-mono text-sm font-bold tracking-[0.2em] text-primary uppercase sm:mr-8">
+          H2
+        </span>
+        <div className="ml-auto flex items-center gap-2 sm:order-3 sm:ml-4">
+          <ModeToggle />
+          <UserMenu />
+        </div>
+        <nav className="order-3 grid w-full min-w-0 grid-cols-2 gap-1 pb-1 sm:order-2 sm:flex sm:flex-1 sm:grid-cols-none sm:items-center sm:pb-0">
           {visibleItems.map(({ href, label, icon: Icon }) => {
             const isActive = activeHref === href;
             return (
@@ -46,12 +52,12 @@ export default function Header() {
                 key={href}
                 href={href}
                 className={cn(
-                  "relative flex items-center gap-1.5 px-3 h-14 text-sm font-medium transition-colors duration-150 hover:text-foreground",
+                  "relative flex h-10 min-w-0 items-center justify-center gap-1.5 px-2 text-center text-xs font-medium transition-colors duration-150 hover:text-foreground sm:h-14 sm:shrink-0 sm:justify-start sm:px-3 sm:text-sm",
                   isActive ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 <Icon className="size-4 shrink-0" />
-                <span>{label}</span>
+                <span className="truncate">{label}</span>
                 <span
                   className={cn(
                     "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-200",
@@ -62,10 +68,6 @@ export default function Header() {
             );
           })}
         </nav>
-        <div className="flex items-center gap-2 ml-4">
-          <ModeToggle />
-          <UserMenu />
-        </div>
       </div>
     </header>
   );

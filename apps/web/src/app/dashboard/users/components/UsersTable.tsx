@@ -68,7 +68,7 @@ function UserRowActions({ user }: { user: { id: string; name: string; role: User
               <option value={UserRole.MANAGER}>Manager</option>
             </select>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
             <Button
               type="button"
               variant="destructive"
@@ -82,7 +82,7 @@ function UserRowActions({ user }: { user: { id: string; name: string; role: User
             >
               Supprimer
             </Button>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Annuler
               </Button>
@@ -124,15 +124,41 @@ export function UsersTable() {
         placeholder="Rechercher par nom ou email..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="max-w-xs"
+        className="w-full sm:max-w-xs"
       />
 
       {query.isPending && <p className="text-muted-foreground">Chargement...</p>}
       {query.isError && <p className="text-destructive">Erreur: {query.error.message}</p>}
 
       {query.isSuccess && (
-        <div className="rounded-md border">
-          <table className="w-full">
+        <>
+          <div className="space-y-3 md:hidden">
+            {filteredUsers.length === 0 ? (
+              <div className="rounded-md border px-4 py-8 text-center text-muted-foreground">
+                Aucun utilisateur trouve.
+              </div>
+            ) : (
+              filteredUsers.map((user) => (
+                <div key={user.id} className="space-y-3 rounded-md border p-4">
+                  <div className="space-y-1">
+                    <p className="font-medium">{user.name}</p>
+                    <p className="text-sm break-words text-muted-foreground">{user.email}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="inline-flex rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                      {getRoleLabel(user.role)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {user.carCount} voiture(s) · {user.reservationCount} reservation(s)
+                    </span>
+                  </div>
+                  <UserRowActions user={user} />
+                </div>
+              ))
+            )}
+          </div>
+          <div className="hidden rounded-md border md:block">
+            <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-2 text-left text-sm font-medium">Nom</th>
@@ -170,7 +196,8 @@ export function UsersTable() {
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

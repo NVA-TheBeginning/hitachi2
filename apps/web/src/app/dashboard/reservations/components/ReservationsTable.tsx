@@ -61,7 +61,7 @@ function ReservationActions({ reservation }: { reservation: { id: string; status
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {reservation.status === ReservationStatus.RESERVED && (
         <>
           <Button
@@ -134,19 +134,19 @@ export function ReservationsTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
         <Input
           placeholder="Rechercher par utilisateur..."
           value={userFilter}
           onChange={(e) => setUserFilter(e.target.value)}
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
         />
-        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-fit" />
-        <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-fit" />
+        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full sm:w-fit" />
+        <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full sm:w-fit" />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as ReservationStatus | "")}
-          className="h-10 rounded-md border px-3 text-sm"
+          className="h-10 w-full rounded-md border px-3 text-sm sm:w-auto"
         >
           <option value="">Tous les statuts</option>
           <option value={ReservationStatus.RESERVED}>Reserve</option>
@@ -160,8 +160,39 @@ export function ReservationsTable() {
       {query.isError && <p className="text-destructive">Erreur: {query.error.message}</p>}
 
       {query.isSuccess && (
-        <div className="rounded-md border">
-          <table className="w-full">
+        <>
+          <div className="space-y-3 md:hidden">
+            {filteredReservations.length === 0 ? (
+              <div className="rounded-md border px-4 py-8 text-center text-muted-foreground">
+                Aucune reservation trouvee.
+              </div>
+            ) : (
+              filteredReservations.map((reservation) => (
+                <div key={reservation.id} className="space-y-3 rounded-md border p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{new Date(reservation.date).toLocaleDateString("fr-FR")}</p>
+                      <p className="text-sm text-muted-foreground">{reservation.parkingSpot.name}</p>
+                    </div>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(reservation.status)}`}
+                    >
+                      {getStatusLabel(reservation.status)}
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p>
+                      Voiture: {reservation.car.name}
+                      {reservation.car.licensePlate ? ` (${reservation.car.licensePlate})` : ""}
+                    </p>
+                  </div>
+                  <ReservationActions reservation={reservation} />
+                </div>
+              ))
+            )}
+          </div>
+          <div className="hidden rounded-md border md:block">
+            <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-2 text-left text-sm font-medium">Date</th>
@@ -202,7 +233,8 @@ export function ReservationsTable() {
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
