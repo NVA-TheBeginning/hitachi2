@@ -1,7 +1,15 @@
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
+import dotenv from "dotenv";
 import { PrismaClient } from "./generated/client";
 import type { UserRole } from "./generated/enums";
+
+const envPath = path.join(import.meta.dir, "../../../apps/server/.env");
+if (existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+}
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
 const prisma = new PrismaClient({ adapter });
